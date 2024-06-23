@@ -318,11 +318,13 @@ class JobSearchAssistant:
             if type(content) == list :
                 print("content is list:")
                 print(content)
-            soup = BeautifulSoup(content, 'html.parser')
-            for element in soup(["script", "style"]):
-                element.extract()
-            text = soup.get_text()
-            res = self.format_text_to_markdown(text)
+                res = None
+            else:
+                soup = BeautifulSoup(content, 'html.parser')
+                for element in soup(["script", "style"]):
+                    element.extract()
+                text = soup.get_text()
+                res = self.format_text_to_markdown(text)
             if res == None:
                 print(f"no info could be extracted from {url}")
                 res = {
