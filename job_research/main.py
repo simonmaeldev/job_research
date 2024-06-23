@@ -287,7 +287,6 @@ class JobSearchAssistant:
         res = search_for_tag(response, "answer")
         return res == "relevant"
 
-
     def score_description(self, desc):
         prompt = JOB_SCORE_PROMPT.replace("{{DOMAIN_OF_COMPETENCE}}", self.domain_of_interest)
         prompt = prompt.replace("{{USER_CONTEXT}}", self.user_context)
