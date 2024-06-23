@@ -376,3 +376,44 @@ Here is some examples of how to provide your final answer. Please follow the for
 </ANSWER_EXAMPLES>
 """
 
+GET_PAIN_POINTS_PROMPT = """
+You are an experienced HR professional tasked with identifying the pain points in the following job description:
+
+<job_desc>
+{{job_desc}}
+</job_desc>
+
+Please carefully read through the job description and identify the key pain points that the company is trying to address with this role. Provide your output in the following format:
+
+<pain_points>
+[List of pain points]
+</pain_points>
+"""
+
+CONNECT_WITH_READER_PROMPT = """
+You are an experienced HR professional tasked with connecting with the reader based on the following pain points:
+
+<pain_points>
+{{pain_points}}
+</pain_points>
+
+Please carefully read through the pain points and provide connection points that would resonate with the reader. Provide your output in the following format:
+
+<connection_points>
+[List of connection points]
+</connection_points>
+"""
+
+WRITE_COVER_LETTER_PROMPT = """
+You are an experienced HR professional tasked with writing a cover letter based on the following connection points:
+
+<connection_points>
+{{connection_points}}
+</connection_points>
+
+Please carefully read through the connection points and write a compelling cover letter. Provide your output in the following format:
+
+<cover_letter>
+[Cover letter text]
+</cover_letter>
+"""

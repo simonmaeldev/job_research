@@ -367,7 +367,27 @@ class JobSearchAssistant:
             print('all initial links are processed!')
             #self.process_descriptions()
 
-# create the generate_cover_letter function. It will go through multiple steps, the output from one step is the input for the next one. The input is formatted in JSON. Each step will use a PROMPT from prompts.py (prompt not created yet). Step 1: get pain points. Step 2: connect with the reader. Step 3: write cover letter
+from prompts import GET_PAIN_POINTS_PROMPT, CONNECT_WITH_READER_PROMPT, WRITE_COVER_LETTER_PROMPT
+
+def generate_cover_letter(job_desc: str) -> bytes:
+    # Step 1: Get pain points
+    prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", job_desc)
+    response = query_llm(prompt)
+    pain_points = search_for_tag(response, "pain_points")
+
+    # Step 2: Connect with the reader
+    prompt = CONNECT_WITH_READER_PROMPT.replace("{{pain_points}}", pain_points)
+    response = query_llm(prompt)
+    connection_points = search_for_tag(response, "connection_points")
+
+    # Step 3: Write cover letter
+    prompt = WRITE_COVER_LETTER_PROMPT.replace("{{connection_points}}", connection_points)
+    response = query_llm(prompt)
+    cover_letter = search_for_tag(response, "cover_letter")
+
+    # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
+    cover_letter_pdf = convert_to_pdf(cover_letter)
+    return cover_letter_pdf
 
     def create_resume_cover_letter(self, job_desc: str, dir_name: str):
         # Create the directory
