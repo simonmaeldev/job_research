@@ -13,7 +13,7 @@ from fake_useragent import UserAgent
 
 
 class Scraper:
-    def __init__(self, api_key, max_retries=3, initial_delay=2, backoff_factor=2, handled_status_codes=None):
+    def __init__(self, api_key, max_retries=1, initial_delay=2, backoff_factor=2, handled_status_codes=None):
         self.conn = sqlite3.connect('webdomains.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS webdomains
