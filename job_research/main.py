@@ -40,7 +40,7 @@ class JobSearchAssistant:
         load_dotenv()
         scrape_api_key = os.getenv('SCRAPEOPS_API_KEY')
         with open(user_context_file, "r") as file:
-            self.user_context = file.read()
+            self.user_context = json.load(file)
         self.job_search_plan = []
         self.initial_links = []
         self.scraper = Scraper(scrape_api_key)
@@ -142,7 +142,7 @@ class JobSearchAssistant:
 
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
-        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", self.user_context)
+        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
         response = query_llm(prompt, model="sonet")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
@@ -282,7 +282,7 @@ class JobSearchAssistant:
 
     def is_job_relevant(self, job:dict) -> bool:
         prompt = JOB_RELEVANCE_PROMPT.replace("{{DOMAIN_OF_INTEREST}}", self.domain_of_interest)
-        prompt = prompt.replace("{{USER_CONTEXT}}", self.user_context)
+        prompt = prompt.replace("{{USER_CONTEXT}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{JOB_DESCRIPTION}}", job["description"])
         response = query_llm(prompt)
         self.verbose_print(response["response"])
@@ -291,7 +291,7 @@ class JobSearchAssistant:
 
     def score_description(self, desc):
         prompt = JOB_SCORE_PROMPT.replace("{{DOMAIN_OF_COMPETENCE}}", self.domain_of_interest)
-        prompt = prompt.replace("{{USER_CONTEXT}}", self.user_context)
+        prompt = prompt.replace("{{USER_CONTEXT}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{JOB_DESCRIPTION}}", desc)
         response = query_llm(prompt)
         self.verbose_print(response["response"])
@@ -367,29 +367,35 @@ class JobSearchAssistant:
             print('all initial links are processed!')
             #self.process_descriptions()
 
-from prompts import GET_PAIN_POINTS_PROMPT, CONNECT_WITH_READER_PROMPT, WRITE_COVER_LETTER_PROMPT
+    def generate_cover_letter(self, job_desc: json) -> bytes:
+        # Step 1: Get pain points
+        prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        response = query_llm(prompt)
+        pain_points = search_for_tag(response, "pain_points")
+        job_desc['challengesAndPainPoints'] = pain_points
 
-def generate_cover_letter(job_desc: str) -> bytes:
-    # Step 1: Get pain points
-    prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", job_desc)
-    response = query_llm(prompt)
-    pain_points = search_for_tag(response, "pain_points")
+        # Step 2: Connect with the reader
+        prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        response = query_llm(prompt)
+        hook = search_for_tag(response, "hook")
+        cover_letter['hook'] = hook
 
-    # Step 2: Connect with the reader
-    prompt = CONNECT_WITH_READER_PROMPT.replace("{{pain_points}}", pain_points)
-    response = query_llm(prompt)
-    connection_points = search_for_tag(response, "connection_points")
+        # Step 3: Write cover letter
+        prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
+        response = query_llm(prompt)
+        cover_letter = search_for_tag(response, "cover_letter")
 
-    # Step 3: Write cover letter
-    prompt = WRITE_COVER_LETTER_PROMPT.replace("{{connection_points}}", connection_points)
-    response = query_llm(prompt)
-    cover_letter = search_for_tag(response, "cover_letter")
+        print(json.dumps(cover_letter))
+        print("end test")
 
-    # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
-    cover_letter_pdf = convert_to_pdf(cover_letter)
-    return cover_letter_pdf
+        # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
+        #cover_letter_pdf = convert_to_pdf(cover_letter)
+        #return cover_letter_pdf
 
-    def create_resume_cover_letter(self, job_desc: str, dir_name: str):
+    def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
         output_path = Path(self.output_dir) / dir_name
         output_path.mkdir(parents=True, exist_ok=True)
@@ -413,39 +419,12 @@ def generate_cover_letter(job_desc: str) -> bytes:
         self.apply_job_search_plan()
 
 
+    #code: create_outputs_from_db(id): id from jobs db. fecth line from db, format all informations into a json object. call generate_cover_letter function
 
+USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 
-#tmp_res = {
-#    'link' : "https://ca.indeed.com/q-artificial-intelligence-l-montr%C3%A9al,-qc-jobs.html",
-#    'query' : "AI jobs in Montreal"
-#}
-#tmp = process_url(tmp_res)
-
-# Generate the job search plan
-#job_search_plan = plan_job_search(user_context)
-
-#tst = search_serper('AI jobs in Montreal')
-
-USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.md")
-
-# before : 16,43 $US antropic, 455 credits scrape
-# after : 15.23, et j'ai tapé la limite d'abord
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, skip_domains=[])
-assistant.process_descriptions()
-#assistant.score_jobs()
+#assistant.process_descriptions()
+assistant.score_jobs()
 #assistant.plan_job_search()
-#print(assistant.next_page_finder("https://ca.indeed.com/q-artificial-intelligence-l-montr%C3%A9al,-qc-jobs.html?vjk=02b2b5d9fccd79c4"))
-#print(assistant.is_url_job_description("https://emplois.ca.indeed.com/q-prompt-engineering-l-montr%C3%A9al,-qc-emplois.html?vjk=fb501da066342381")) #false
-#print(assistant.is_url_job_description("https://ca.indeed.com/viewjob?jk=6156853c8bd089f7&from=serp&vjs=3")) #true
-#with open(os.path.join(os.path.dirname(__file__), "parsed2.html"), "r") as file:
-#    content = file.read()
-#    print(assistant.get_links(content))
-#print(assistant.fix_url("/rc/clk?jk=7d6b6395ae455bfd&bb=cbRRkUImU_5DE74Jx4Ucc7__HOgjkTyEl7SDMK8qTaecO3XL1CThgTprM8N7kcjR4p71T5fztPpk-xJujdbhaQWurrAYVzm2j54osVQNBwq1TAooCy-uMTAuQbfxFuIl&xkcb=SoA967M3B4lM8ExSQB0MbzkdCdPP&fccid=201d2daafa675fff&vjs=3", "https://ca.indeed.com/viewjob?jk=6156853c8bd089f7&from=serp&vjs=3"))
-# with open(os.path.join(os.path.dirname(__file__), "example_job_description.txt"), "r") as file:
-#     content = file.read()
-#     res = assistant.format_text_to_markdown(content)
-#     print(res)
-#     res2 = assistant.is_job_relevant(res)
-#     print(res2)
-
 
