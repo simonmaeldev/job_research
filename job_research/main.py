@@ -143,7 +143,7 @@ class JobSearchAssistant:
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
         prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="sonet")
+        response = query_llm(prompt, model="sonnet")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
         query_list = []
@@ -158,7 +158,7 @@ class JobSearchAssistant:
     def next_page_finder(self, url:str) -> str:
         prompt = NEXT_PAGE_FINDER_PROMPT
         prompt_copy = prompt.replace("{{URL}}", url)
-        response = query_llm(prompt_copy, "sonet")
+        response = query_llm(prompt_copy, "sonnet")
         self.verbose_print(response["response"])
         res = search_for_tag(response, "result").strip()
         if res == 'No "next page" link found on this page.' or res == url:
@@ -370,26 +370,30 @@ class JobSearchAssistant:
     def generate_cover_letter(self, job_desc: json) -> bytes:
         # Step 1: Get pain points
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        response = query_llm(prompt)
+        response = query_llm(prompt, model="sonnet")
         pain_points = search_for_tag(response, "pain_points")
+        print(pain_points)
         job_desc['challengesAndPainPoints'] = pain_points
 
         # Step 2: Connect with the reader
         prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        response = query_llm(prompt)
+        response = query_llm(prompt, model="sonnet")
         hook = search_for_tag(response, "hook")
-        cover_letter['hook'] = hook
+        print(hook)
+        print(f"hook : {len(hook.split(' '))} words")
+        cover_letter = {'hook': hook}
 
         # Step 3: Write cover letter
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
-        response = query_llm(prompt)
-        cover_letter = search_for_tag(response, "cover_letter")
+        response = query_llm(prompt, model="sonnet")
+        cl_txt = search_for_tag(response, "cover_letter")
+        cover_letter = json.loads(cl_txt, strict=False)
+        print(f"body: {len(cover_letter['body'].split(' '))} words")
 
-        print(json.dumps(cover_letter))
-        print("end test")
+        print(json.dumps(cover_letter, indent=4))
 
         # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
         #cover_letter_pdf = convert_to_pdf(cover_letter)
@@ -448,7 +452,7 @@ class JobSearchAssistant:
         cover_letter = self.generate_cover_letter(job_json)
         
         # Create a directory for outputs
-        dir_name = f"job_{id}"
+        dir_name = f"{id}_{job_json['title']}_{job_json['company']}"
         self.create_resume_cover_letter(job_json, dir_name)
         
         print(f"Outputs created for job {id} in directory {dir_name}")
@@ -457,6 +461,6 @@ USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, skip_domains=[])
 #assistant.process_descriptions()
-assistant.score_jobs()
+#assistant.score_jobs()
 #assistant.plan_job_search()
-
+assistant.create_outputs_from_db(216)

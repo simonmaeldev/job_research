@@ -8,7 +8,7 @@ import time
 
 MODEL_NAMES = {
     "opus": "claude-3-opus-20240229",
-    "sonet": "claude-3-sonnet-20240229",
+    "sonnet": "claude-3-5-sonnet-20240620",
     "haiku": "claude-3-haiku-20240307",
     "gpt3.5": "gpt-3.5-turbo",
     "gpt4": "gpt-4-turbo-preview",
@@ -18,7 +18,7 @@ MODEL_NAMES = {
 
 MODEL_PRICING = {
     "opus": {"input_cost_per_mtok": 15.00, "output_cost_per_mtok": 75.00},
-    "sonet": {"input_cost_per_mtok": 3.00, "output_cost_per_mtok": 15.00},
+    "sonnet": {"input_cost_per_mtok": 3.00, "output_cost_per_mtok": 15.00},
     "haiku": {"input_cost_per_mtok": 0.25, "output_cost_per_mtok": 1.25},
     "gpt3.5": {"input_cost_per_mtok": 0.5, "output_cost_per_mtok": 1.5},
     "gpt4": {"input_cost_per_mtok": 10.00, "output_cost_per_mtok": 30.0},
@@ -32,7 +32,7 @@ def query_llm(query: str, model: str = "haiku", api_key: str = None) -> dict:
 
     Args:
         query (str): The query to send to the LLM.
-        model (str): The LLM model to use (opus, sonet, haiku, gpt3.5-turbo, or gpt4-turbo).
+        model (str): The LLM model to use (opus, sonnet, haiku, gpt3.5-turbo, or gpt4-turbo).
         api_key (str, optional): The API key for the LLM service. If not provided, it will be read from the environment variable.
 
     Returns:
@@ -118,7 +118,7 @@ def prompt_formatter(prompt_to_format: str) -> str:
         full_metaprompt = f.read()
         prompt = full_metaprompt
         full_query = prompt.replace('{{prompt}}', prompt_to_format)
-        model = "sonet"
+        model = "sonnet"
 
         # Query the LLM using the query_llm function from llm.py
         result = query_llm(full_query, model=model)

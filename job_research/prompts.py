@@ -237,7 +237,7 @@ OR
 <answer>not relevant</answer>
 """
 
-
+#todo améliorer les examples en montrant le cv, l'envie, la description du job, comment réfléchir et quel score donner
 JOB_SCORE_PROMPT = """
 You are an experience HR.
 Your goal is to score the fitting of a job for the user based on what he wants to do, his experiences, and the job description.
@@ -377,13 +377,13 @@ Here is some examples of how to provide your final answer. Please follow the for
 """
 
 GET_PAIN_POINTS_PROMPT = """
-You are an experienced HR professional tasked with identifying the pain points in the following job description:
+You are an experienced HR professional tasked with identifying the pain points and the biggest challenges someone in this position would face day-to-day, in the following job description:
 
 <job_desc>
 {{job_desc}}
 </job_desc>
 
-Please carefully read through the job description and identify the key pain points that the company is trying to address with this role. Provide your output in the following format:
+Please carefully read through the job description and identify the key pain points and the biggest challenges someone in this position would face day-to-day, in the following job description that the company is trying to address with this role. Provide your output in the following format:
 
 <pain_points>
 [List of pain points]
@@ -391,29 +391,59 @@ Please carefully read through the job description and identify the key pain poin
 """
 
 CONNECT_WITH_READER_PROMPT = """
-You are an experienced HR professional tasked with connecting with the reader based on the following pain points:
+Roleplay as the user. You are applying for a new job.
+Write an attention-grabbing hook for your cover letter that highlights your experience and qualifications in a way that shows you empathize and can successfully take on the challenges and pain points of the {{job_title}} role
+Consider incorporating specific examples of how you've tackled these challenges and pain points in your past work, and explore creative ways to express your enthusiasm for the opportunity. Keep your hook within 100 words.
 
-<pain_points>
-{{pain_points}}
-</pain_points>
+<user_informations>
+{{user_info}}
+</user_informations>
 
-Please carefully read through the pain points and provide connection points that would resonate with the reader. Provide your output in the following format:
+<job_description>
+{{job_desc}}
+</job_description>
 
-<connection_points>
-[List of connection points]
-</connection_points>
+# OUTPUT
+
+Please provide your hook in the following format :
+
+<hook>
+Write your hook there.
+</hook>
 """
 
 WRITE_COVER_LETTER_PROMPT = """
-You are an experienced HR professional tasked with writing a cover letter based on the following connection points:
+You are an experienced HR professional tasked with writing a cover letter for a job description.
 
-<connection_points>
-{{connection_points}}
-</connection_points>
+# RULES AND GUIDELINES:
+- respond in json format
+- extend the current cover letter
+- do not rewrite the hook, just extend the cover letter in the 'body' property of the json object
+- keep the content of the body property under 250 words
+- use the resume of the user to write the body of the cover letter as if you were the user
+- spin ONE of your experiences to show that you can deal with this challenge
+- DO NOT MAKE ANY INFORMATION
 
-Please carefully read through the connection points and write a compelling cover letter. Provide your output in the following format:
+
+# CONTEXT
+
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<current_cover_letter>
+{{cover_letter}}
+</current_cover_letter>
+
+# OUTPUT
+
+Please respond in the following format :
 
 <cover_letter>
-[Cover letter text]
+a json object based on the current_cover_letter, in wich you added a 'body' property that is the rest of the cover letter, generated using the rules and guidelines.
 </cover_letter>
 """
