@@ -235,6 +235,7 @@ class JobSearchAssistant:
         if self.is_url_job_description(url):
             self.verbose_print(f"end processing {url} : description")
             self.jobs_descriptions.add(url)
+            self.process_job_description(url)
         else :
             self.verbose_print(f"end processing {url} : list")
             content = self.scraper.retry_with_backoff(url)
@@ -361,7 +362,7 @@ class JobSearchAssistant:
             print(f'Got {len(self.initial_links)} to process')
             self.process_initial_links()
             print('all initial links are processed!')
-            self.process_descriptions()
+            #self.process_descriptions()
 
     def run(self):
         self.plan_job_search()
