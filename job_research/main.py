@@ -49,6 +49,28 @@ class JobSearchAssistant:
         self.verbose = verbose
         self.skip_domains = skip_domains
 
+    def create_resume_cover_letter(self, job_desc: str, dir_name: str):
+        import os
+        from pathlib import Path
+
+        # Create the directory
+        output_path = Path(self.output_dir) / dir_name
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Generate resume and cover letter
+        resume_content = self.generate_resume(job_desc)
+        cover_letter_content = self.generate_cover_letter(job_desc)
+
+        # Save the resume and cover letter as PDF
+        resume_file = output_path / "resume.pdf"
+        cover_letter_file = output_path / "cover_letter.pdf"
+
+        with open(resume_file, "wb") as f:
+            f.write(resume_content)
+
+        with open(cover_letter_file, "wb") as f:
+            f.write(cover_letter_content)
+
     def verbose_print(self, msg):
         if self.verbose:
             print(msg)
