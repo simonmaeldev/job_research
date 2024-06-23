@@ -419,7 +419,39 @@ class JobSearchAssistant:
         self.apply_job_search_plan()
 
 
-    #code: create_outputs_from_db(id): id from jobs db. fecth line from db, format all informations into a json object. call generate_cover_letter function
+    def create_outputs_from_db(self, id):
+        # Fetch job details from the database
+        self.c.execute("SELECT * FROM jobs WHERE id = ?", (id,))
+        job = self.c.fetchone()
+        
+        if job is None:
+            print(f"No job found with id {id}")
+            return
+        
+        # Create a JSON object with all job information
+        job_json = {
+            "id": job[0],
+            "is_relevant": bool(job[1]),
+            "url": job[2],
+            "title": job[3],
+            "description": job[4],
+            "score": job[5],
+            "is_valid": bool(job[6]),
+            "documents_path": job[7],
+            "location": job[8],
+            "salary": job[9],
+            "company": job[10],
+            "date": job[11]
+        }
+        
+        # Generate cover letter
+        cover_letter = self.generate_cover_letter(job_json)
+        
+        # Create a directory for outputs
+        dir_name = f"job_{id}"
+        self.create_resume_cover_letter(job_json, dir_name)
+        
+        print(f"Outputs created for job {id} in directory {dir_name}")
 
 USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 
