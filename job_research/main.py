@@ -10,9 +10,10 @@ import os
 import sqlite3
 from urllib.parse import urlparse
 import datetime
+from pathlib import Path
 
 class JobSearchAssistant:
-    def __init__(self, user_context_file, verbose=False, max_workers = None, skip_domains=[]):
+    def __init__(self, user_context_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir"):
         self.conn = sqlite3.connect('jobs.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS jobs (
@@ -48,28 +49,7 @@ class JobSearchAssistant:
         self.domain_of_interest = ""
         self.verbose = verbose
         self.skip_domains = skip_domains
-
-    def create_resume_cover_letter(self, job_desc: str, dir_name: str):
-        import os
-        from pathlib import Path
-
-        # Create the directory
-        output_path = Path(self.output_dir) / dir_name
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        # Generate resume and cover letter
-        resume_content = self.generate_resume(job_desc)
-        cover_letter_content = self.generate_cover_letter(job_desc)
-
-        # Save the resume and cover letter as PDF
-        resume_file = output_path / "resume.pdf"
-        cover_letter_file = output_path / "cover_letter.pdf"
-
-        with open(resume_file, "wb") as f:
-            f.write(resume_content)
-
-        with open(cover_letter_file, "wb") as f:
-            f.write(cover_letter_content)
+        self.output_dir = output_dir
 
     def verbose_print(self, msg):
         if self.verbose:
@@ -384,6 +364,27 @@ class JobSearchAssistant:
             self.process_initial_links()
             print('all initial links are processed!')
             #self.process_descriptions()
+
+
+
+    def create_resume_cover_letter(self, job_desc: str, dir_name: str):
+        # Create the directory
+        output_path = Path(self.output_dir) / dir_name
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Generate resume and cover letter
+        resume_content = self.generate_resume(job_desc)
+        cover_letter_content = self.generate_cover_letter(job_desc)
+
+        # Save the resume and cover letter as PDF
+        resume_file = output_path / "resume.pdf"
+        cover_letter_file = output_path / "cover_letter.pdf"
+
+        with open(resume_file, "wb") as f:
+            f.write(resume_content)
+
+        with open(cover_letter_file, "wb") as f:
+            f.write(cover_letter_content)
 
     def run(self):
         self.plan_job_search()
