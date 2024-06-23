@@ -63,6 +63,7 @@ class Scraper:
         response = requests.get(url, headers=headers, proxies=proxies)
         status = response.status_code
         if status in self.handled_status_codes:
+            print("status: ", status)
             return (status, [])
         else:
             logging.info(f"Successfully scraped URL: {url}")

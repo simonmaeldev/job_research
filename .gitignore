@@ -167,3 +167,4 @@ jobs.db
 .vscode
 db
 user_context.md
+.aider*
