@@ -400,9 +400,20 @@ class JobSearchAssistant:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         cl_tex = search_for_tag(response, "cover_latex")
-        #code: write cl_tex to cover_letter.tex inside the directory
-        #code: convert latex file in pdf file and save it to cover_letter.pdf inside the directory
-        #code: return path to cover_letter.pdf
+        cover_letter_tex_path = output_path / "cover_letter.tex"
+        with open(cover_letter_tex_path, "w") as f:
+            f.write(cl_tex)
+        
+        # Convert LaTeX to PDF
+        os.system(f"pdflatex -output-directory={output_path} {cover_letter_tex_path}")
+        
+        # Clean up auxiliary files
+        for ext in [".aux", ".log", ".out"]:
+            aux_file = output_path / f"cover_letter{ext}"
+            if aux_file.exists():
+                aux_file.unlink()
+        
+        return str(output_path / "cover_letter.pdf")
 
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
