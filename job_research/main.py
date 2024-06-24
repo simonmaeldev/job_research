@@ -39,7 +39,7 @@ class JobSearchAssistant:
         self.conn.commit()
         load_dotenv()
         scrape_api_key = os.getenv('SCRAPEOPS_API_KEY')
-        with open(user_context_file, "r") as file:
+        with open(user_context_file, "r", encoding="utf-8") as file:
             self.user_context = json.load(file)
         self.job_search_plan = []
         self.initial_links = []
@@ -399,9 +399,9 @@ class JobSearchAssistant:
         with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r") as f:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
+        response = query_llm(prompt)
         cl_tex = search_for_tag(response, "cover_latex")
         cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
-        os.makedirs(output_path, exist_ok=True)
         with open(cover_letter_tex_path, "w") as f:
             f.write(cl_tex)
         
@@ -474,7 +474,7 @@ class JobSearchAssistant:
 
         
         # Generate cover letter
-        cover_letter = self.generate_cover_letter(job_json, dir_name)
+        cover_letter = self.generate_cover_letter(job_json, output_path)
         
         self.create_resume_cover_letter(job_json, dir_name)
         

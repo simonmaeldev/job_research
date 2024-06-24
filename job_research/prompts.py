@@ -447,3 +447,36 @@ Please respond in the following format :
 a json object based on the current_cover_letter, in wich you added a 'body' property that is the rest of the cover letter, generated using the rules and guidelines.
 </cover_letter>
 """
+
+LATEX_COVER_LETTER_PROMPT = """
+You are an experienced HR professional tasked with writing a cover letter for a job description.
+
+# RULES
+- use the template to write the cover letter in LaTeX
+- use do not make any information
+- generate a valide latex file
+- use the data given in CONTEXT to fill up the template
+
+# CONTEXT
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<cover_letter>
+{{cover_letter}}
+</cover_letter>
+
+# TEMPLATE
+
+<latex_template>
+{{latex_template}}
+<latex_template>
+
+# OUTPUT
+
+Please provide the full LaTeX document inside the following format :
+<cover_latex>
+the cover letter in latex using the template goes here
+</cover_latex>
+
+"""
