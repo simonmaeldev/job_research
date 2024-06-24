@@ -384,7 +384,7 @@ class JobSearchAssistant:
         print(f"hook : {len(hook.split(' '))} words")
         cover_letter = {'hook': hook}
 
-        # Step 3: Write cover letter
+        # Step 3: Write body of cover letter
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
@@ -393,8 +393,11 @@ class JobSearchAssistant:
         cover_letter = json.loads(cl_txt, strict=False)
         print(f"body: {len(cover_letter['body'].split(' '))} words")
 
-        print(json.dumps(cover_letter, indent=4))
-
+        # Step 4: generate cover letter in tex and pdf
+        prompt = LATEX_COVER_LETTER_PROMPT.replace("{{cover_letter}}", json.dumps(cover_letter))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        #code : cover_latex_template is read from file os.path.join(os.path.dirname(__file__), "cover_template.tex")
+        prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
         #cover_letter_pdf = convert_to_pdf(cover_letter)
         #return cover_letter_pdf
