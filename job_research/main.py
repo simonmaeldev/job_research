@@ -367,7 +367,7 @@ class JobSearchAssistant:
             print('all initial links are processed!')
             #self.process_descriptions()
 
-    def generate_cover_letter(self, job_desc: json) -> bytes:
+    def generate_cover_letter(self, job_desc: json, dir_name: str):
         # Step 1: Get pain points
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         response = query_llm(prompt, model="sonnet")
@@ -399,9 +399,10 @@ class JobSearchAssistant:
         with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r") as f:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
-        # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
-        #cover_letter_pdf = convert_to_pdf(cover_letter)
-        #return cover_letter_pdf
+        cl_tex = search_for_tag(response, "cover_latex")
+        #code: write cl_tex to cover_letter.tex inside the directory
+        #code: convert latex file in pdf file and save it to cover_letter.pdf inside the directory
+        #code: return path to cover_letter.pdf
 
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
