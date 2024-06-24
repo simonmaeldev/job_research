@@ -367,7 +367,7 @@ class JobSearchAssistant:
             print('all initial links are processed!')
             #self.process_descriptions()
 
-    def generate_cover_letter(self, job_desc: json, dir_name: str):
+    def generate_cover_letter(self, job_desc: json, output_path: str):
         # Step 1: Get pain points
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         response = query_llm(prompt, model="sonnet")
@@ -463,12 +463,12 @@ class JobSearchAssistant:
             "company": job[10],
             "date": job[11]
         }
-        
-        # Generate cover letter
-        cover_letter = self.generate_cover_letter(job_json)
-        
         # Create a directory for outputs
         dir_name = f"{id}_{job_json['title']}_{job_json['company']}"
+        
+        # Generate cover letter
+        cover_letter = self.generate_cover_letter(job_json, dir_name)
+        
         self.create_resume_cover_letter(job_json, dir_name)
         
         print(f"Outputs created for job {id} in directory {dir_name}")
@@ -479,4 +479,4 @@ assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, s
 #assistant.process_descriptions()
 #assistant.score_jobs()
 #assistant.plan_job_search()
-assistant.create_outputs_from_db(216)
+assistant.create_outputs_from_db(6)
