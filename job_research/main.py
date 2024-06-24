@@ -396,7 +396,8 @@ class JobSearchAssistant:
         # Step 4: generate cover letter in tex and pdf
         prompt = LATEX_COVER_LETTER_PROMPT.replace("{{cover_letter}}", json.dumps(cover_letter))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        #code : cover_latex_template is read from file os.path.join(os.path.dirname(__file__), "cover_template.tex")
+        with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r") as f:
+            cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         # Convert cover letter to PDF (assuming a function convert_to_pdf exists)
         #cover_letter_pdf = convert_to_pdf(cover_letter)
