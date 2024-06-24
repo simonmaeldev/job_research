@@ -401,7 +401,7 @@ class JobSearchAssistant:
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         cl_tex = search_for_tag(response, "cover_latex")
         cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
-        with open(cover_letter_tex_path, "w") as f:
+        with open(cover_letter_tex_path, "w") as f: #code: error [Errno 2] No such file or directory: '6_Generative_AI_Engineer_Alexa_Translations/cover_letter.tex'. Please fix it
             f.write(cl_tex)
         
         # Convert LaTeX to PDF
@@ -465,6 +465,12 @@ class JobSearchAssistant:
         }
         # Create a directory for outputs
         dir_name = f"{id}_{job_json['title']}_{job_json['company']}"
+        dir_name = dir_name.replace(' ', '_')
+
+        #todo : to remove
+        output_path = os.path.join(self.output_dir, dir_name)
+        os.makedirs(output_path, exist_ok=True)
+
         
         # Generate cover letter
         cover_letter = self.generate_cover_letter(job_json, dir_name)
