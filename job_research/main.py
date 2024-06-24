@@ -400,7 +400,7 @@ class JobSearchAssistant:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         cl_tex = search_for_tag(response, "cover_latex")
-        cover_letter_tex_path = output_path / "cover_letter.tex"
+        cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
         with open(cover_letter_tex_path, "w") as f:
             f.write(cl_tex)
         
@@ -409,24 +409,24 @@ class JobSearchAssistant:
         
         # Clean up auxiliary files
         for ext in [".aux", ".log", ".out"]:
-            aux_file = output_path / f"cover_letter{ext}"
-            if aux_file.exists():
-                aux_file.unlink()
+            aux_file = os.path.join(output_path, f"cover_letter{ext}")
+            if os.path.exists(aux_file):
+                os.remove(aux_file)
         
-        return str(output_path / "cover_letter.pdf")
+        return os.path.join(output_path, "cover_letter.pdf")
 
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
-        output_path = Path(self.output_dir) / dir_name
-        output_path.mkdir(parents=True, exist_ok=True)
+        output_path = os.path.join(self.output_dir, dir_name)
+        os.makedirs(output_path, exist_ok=True)
 
         # Generate resume and cover letter
         resume_content = self.generate_resume(job_desc)
         cover_letter_content = self.generate_cover_letter(job_desc)
 
         # Save the resume and cover letter as PDF
-        resume_file = output_path / "resume.pdf"
-        cover_letter_file = output_path / "cover_letter.pdf"
+        resume_file = os.path.join(output_path, "resume.pdf")
+        cover_letter_file = os.path.join(output_path, "cover_letter.pdf")
 
         with open(resume_file, "wb") as f:
             f.write(resume_content)
