@@ -1,0 +1,134 @@
+\documentclass[letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{fontawesome}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{eurosym}
+
+\newcommand\MyHeadings[4]{%
+  \noindent \textbf{#1} \hfill\textbf{\underline{#2}}(\textit{#3}) \hfill \textbf{#4}
+\par
+}
+
+% Personal information
+\newcommand{\myname}{Lorem Ipsum}
+\newcommand{\contactinfo}{\faPhone{} (123)456-7890 \textbar{} \faEnvelope{} lorem@ipsum.com \textbar{} \faLinkedin{} \href{https://linkedin.com/in/loremipsum}{Lorem Ipsum} \textbar{} \faGithub{} \href{https://github.com/loremipsum}{loremipsum} \textbar{} \faYoutubePlay{} \href{https://youtube.com/@LoremIpsum}{@LoremIpsum} \textit{123 Dolor St, Sit Amet, AB, C1D 2E3, Country}}  
+
+% Command for header with personal information
+\newcommand{\header}{
+    \begin{center}
+    \Huge\textbf{\myname} \\
+    \small\contactinfo \\
+    \end{center}
+}
+
+% Command for section headers
+\newcommand{\sectionheader}[1]{
+    \vspace{8pt}
+    \noindent\textbf{\large #1}
+    \vspace{4pt}
+    \hrule
+    \vspace{6pt}
+}
+
+% Custom itemize for skills
+\newlist{skilllist}{itemize}{1}
+\setlist[skilllist]{label=--,left=0pt,labelindent=15pt}
+
+\begin{document}
+
+\header
+
+% Summary
+\sectionheader{Résumé professionnel}
+
+{{professional_summary}}
+
+% Skills
+\sectionheader{Compétences}
+\noindent Python \textbar{} Java \textbar{} Git \textbar{} Français - langue maternelle \textbar{} Curieux \textbar{} Autonome \textbar{} Adipiscing \textbar{} Elit \textbar{} Sed \textbar{} Do \textbar{} Eiusmod \textbar{} Tempor \textbar{} Incididunt \textbar{} Ut \textbar{} Labore \textbar{} Et \textbar{} Dolore \textbar{} Magna \textbar{} Aliqua \textbar{} Ut \textbar{} Enim \textbar{} Ad \textbar{} Minim \textbar{} Veniam \textbar{} Quis \textbar{} Nostrud \textbar{} Exercitation \textbar{} Ullamco \textbar{} Laboris \textbar{} Nisi \textbar{} Ut \textbar{} Aliquip \textbar{} Ex \textbar{} Ea \textbar{} Commodo \textbar{} Consequat
+
+% Professional Experience
+\sectionheader{Expériences professionnelles}
+
+\MyHeadings{Lorem Ipsum}{Dolor Sit Amet}{Consectetur, Adipiscing}{01/2023 -- 12/2023}
+
+\begin{itemize}
+    \item Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+    \item Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+    \item Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+\end{itemize}
+
+\vspace{6pt}
+
+\MyHeadings{Neque Porro}{Quisquam Est}{Qui Dolorem, Ipsum}{06/2022 -- 12/2022}
+\begin{itemize}
+    \item Quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+    \item Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.
+\end{itemize}
+
+\vspace{6pt}
+
+\MyHeadings{Quis Autem}{Vel Eum Iure}{Reprehenderit, Qui}{09/2021 -- 09/2022}
+\begin{itemize}
+    \item In ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.
+    \item At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
+\end{itemize}
+
+\vspace{6pt}
+
+\MyHeadings{Similique Sunt}{In Culpa}{Qui Officia, Deserunt}{04/2021 -- 09/2021}
+Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.
+
+\vspace{6pt}
+
+\MyHeadings{Omnis Voluptas}{Assumenda Est}{Omnis Dolor, Repellendus}{05/2020 -- 08/2020}
+Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.
+
+\vspace{6pt}
+
+% Other Relevant Experience
+\sectionheader{Autres expériences pertinentes}
+\begin{itemize}
+    \item Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.
+    \item Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.
+    \item Omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.
+\end{itemize}
+
+\vspace{6pt}
+
+% Education
+\sectionheader{Formation}
+\textbf{Lorem Ipsum Dolor Sit Amet} \hfill Consectetur, Adipiscing \\
+Elit Sed Do Eiusmod Tempor Incididunt, 2015 -- 2020.
+Ut labore et dolore magna aliqua.
+
+\vspace{6pt}
+
+% Associations
+\sectionheader{Associatif}
+\begin{itemize}
+    \item \textbf{Lorem Ipsum Dolor} (2018-2019)
+    \item Sit amet consectetur adipiscing elit: \textbf{sed do eiusmod tempor incididunt, 1500\euro~ut labore}.
+\end{itemize}
+
+\sectionheader{Hobbies}
+\begin{itemize}
+    \item Lorem: ipsum, dolor, sit, amet, consectetur, adipiscing...
+    \item Elit: sed, do, eiusmod, tempor
+    \item Incididunt: ut, labore, et, dolore
+    \item Magna: aliqua, ut, enim, ad, minim...
+    \item Veniam: quis, nostrud, exercitation, ullamco...
+    \item Et cetera, lorem ipsum dolor sit amet
+\end{itemize}
+
+\vspace{6pt}
+
+\sectionheader{Références}
+Disponibles sur demande.
+
+\end{document}

@@ -40,6 +40,7 @@ You are an experienced HR professional tasked with choosing a relevant, industry
 - Avoid being too jargony
 - Do not mention looking for experience
 - Do not talk about what the user wants (companies want to know what the user will do for them)
+- keep the language used in the job_description
 
 # CONTEXT:
 <job_description>
@@ -69,6 +70,7 @@ You are an experienced HR professional tasked with stating the job title or prof
 # RULES AND GUIDELINES:
 - Use the job title or describe what the user does
 - If new to the industry or returning after a break, use "[industry] professional"
+- keep the language used in the job_description
 
 # CONTEXT:
 <job_description>
@@ -110,6 +112,7 @@ You are an experienced HR professional tasked with stating the number of years o
 # RULES AND GUIDELINES:
 - Include the number of years of experience (personal projects count)
 - Optionally add "with a background in [insert background]"
+- keep the language used in the job_description
 
 # CONTEXT:
 <job_description>
@@ -129,6 +132,10 @@ You are an experienced HR professional tasked with stating the number of years o
 - 3 years of experience with a background in marketing
 
 # OUTPUT:
+<scratchpad>
+Calculate the user's experience in the relevant domain, using the <user_information> tag.
+</scratchpad>
+
 Please provide the experience statement in the following JSON format:
 
 <output>
@@ -148,7 +155,8 @@ You are an experienced HR professional tasked with listing key specialties or sk
 - Focus on what the candidate can do for the company
 - Keep it concise
 - Do not use personal pronouns (I, me, my)
-- Avoid jargony vocabulary
+- comma separate the keywords
+- keep the language used in the job_description
 
 # CONTEXT:
 <job_description>
@@ -167,6 +175,11 @@ You are an experienced HR professional tasked with listing key specialties or sk
 Specialties: intelligence artificielle, algorithmes et structures de données, recherche opérationnelle, tests automatisés, déploiement continu, base de données, microservices, bonne communication
 
 # OUTPUT:
+
+Think step by step:
+1. list all the keywords from the <job_description> tag
+2. list all the keywords from the previous list that are compatible with the user's experience. You can find it's experience in <user_informations> tag.
+
 Please provide the list of specialties in the following JSON format:
 
 <output>
@@ -189,6 +202,8 @@ You are an experienced HR professional tasked with combining the previous steps 
 - Use industry-relevant keywords from the job description
 - Do not use personal pronouns (I, me, my)
 - Avoid jargony vocabulary
+- keep the language used in the job_description
+- use only the following structure : adjective + title + experience + specialties
 
 # CONTEXT:
 <job_description>
@@ -210,7 +225,7 @@ Développeur logiciel curieux avec 4+ ans d'expérience en backend. Spécialité
 Please provide your professional summary in the following format:
 
 <professional_summary>
-Your professional summary goes here.
+Your professional summary goes here, using this structure : adjective + title + experience + specialties includes: specialties. Keep it short and concise, to the point. 
 </professional_summary>
 """
 
@@ -224,8 +239,20 @@ You are an experienced HR professional tasked with creating a LaTeX resume based
 - Ensure the LaTeX code is valid and compilable
 - Do not add or remove any LaTeX commands from the template
 - Only fill in the designated areas in the template
+- Use the langage from the job_description
+- Tailor the user experience to the job_description. Include informations that are relevant for the job and could help the user get an interview. Hobbies and so are important to, because it can help the user connect with the recruiter. 
+- Each bullet point should follow the following format : "I accomplished X by the measure Y that resulted in Z". For example, "I lowered hospital mortality rate by 10% by education nurses in new protocols which translates to 200 lives saved per year". Use compelling langage and keep the bullet point within 50 words.
+- Do not make any information, use only informations from the <user_informations> tag.
+- Put relevant metrics and informations for the recruiter in bold.
+- Stick to the template as much as possible
+- Keep the professional summary as it is, DO NOT MODIFY IT.
+- Translate the template and the user_informations if needed.
 
 # CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
 <user_informations>
 {{user_info}}
 </user_informations>
@@ -240,10 +267,26 @@ You are an experienced HR professional tasked with creating a LaTeX resume based
 </latex_template>
 
 # OUTPUT:
+
+Think step by step:
+1. Read carefully the job description
+2. In what language is the job description?
+3. Read carefully the latex_template
+4. What is the professional summary inside it?
+5. Use the the latex_template to create the user's resume in latex. Use the same language as the job description, but keep the professional summary as it is (you can translate it tho).
+
 Please provide the full LaTeX document inside the following format:
 
+<language>
+what is the language of job description?
+</language>
+
+<professional_summary_template>
+Write here the professional summary from the template. It should be exactly the same than <professional_summary> tag. DO NOT CHANGE IT, JUST TRANSLATE IT IF NEEDED.
+</professional_summary_template>
+
 <resume_latex>
-The complete LaTeX resume goes here
+The complete LaTeX resume goes here. Keep the same language than the job_description. DO NOT MODIFY THE PROFESSIONAL SUMMARY, KEEP IT AS IT IS. TRANSLATE THE TEMPLATE IF NEEDED.
 </resume_latex>
 """
 
