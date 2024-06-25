@@ -32,23 +32,14 @@ Here are the steps to follow:
 Remember, do not actually perform any searches or provide job listing results. Your task is simply to generate potential queries based on understanding the user's background and interests from the provided context.
 """
 
-GENERATE_PROFESSIONAL_SUMMARY_PROMPT = """
-You are an experienced HR professional tasked with writing a professional summary for a resume tailored to a specific job description.
+GENERATE_PROFESSIONAL_SUMMARY_STEP1_PROMPT = """
+You are an experienced HR professional tasked with choosing a relevant, industry-specific adjective for a professional summary.
 
 # RULES AND GUIDELINES:
-- Follow the steps outlined below to create a compelling professional summary
-- Use the user's information and the job description to tailor the summary
-- Keep the summary concise, around 2-3 sentences or 50-75 words
-- Focus on what the candidate can do for the company, not what the candidate want
-- Use industry-relevant keywords from the job description
-- Do not use personal pronouns (I, me, my)
-- Don't use a jargony vocabulary
-
-# STEPS:
-1. Choose a relevant, industry-specific adjective (e.g., passionate, highly motivated, seasoned, ambitious, diligent, thoughtful, proactive, caring, decisive, creative, reliable, solution-oriented)
-2. State the job title or professional field
-3. Mention years of experience (including personal projects)
-4. List key specialties or skills, using keywords from the job description
+- Choose an adjective that is really relevant in the user's industry
+- Avoid being too jargony
+- Do not mention looking for experience
+- Do not talk about what the user wants (companies want to know what the user will do for them)
 
 # CONTEXT:
 <job_description>
@@ -58,6 +49,162 @@ You are an experienced HR professional tasked with writing a professional summar
 <user_informations>
 {{user_info}}
 </user_informations>
+
+# EXAMPLES:
+Relevant adjectives could include: passionate, highly motivated, seasoned, ambitious, diligent, thoughtful, proactive, caring, decisive, creative, reliable, solution-oriented
+
+# OUTPUT:
+Please provide your chosen adjective in the following JSON format:
+
+<output>
+{
+    "adjective": "Your chosen adjective"
+}
+</output>
+"""
+
+GENERATE_PROFESSIONAL_SUMMARY_STEP2_PROMPT = """
+You are an experienced HR professional tasked with stating the job title or professional field for a professional summary.
+
+# RULES AND GUIDELINES:
+- Use the job title or describe what the user does
+- If new to the industry or returning after a break, use "[industry] professional"
+
+# CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<previous_step>
+{{previous_step}}
+</previous_step>
+
+# EXAMPLES:
+- Producer
+- Project manager
+- Electrician
+- Designer
+- Software engineer
+- Marketing professional
+- Childcare professional
+- Software professional
+
+# OUTPUT:
+Please provide the job title or professional field in the following JSON format:
+
+<output>
+{
+    "adjective": "{{previous_step.adjective}}",
+    "title": "Your chosen job title or professional field"
+}
+</output>
+"""
+
+GENERATE_PROFESSIONAL_SUMMARY_STEP3_PROMPT = """
+You are an experienced HR professional tasked with stating the number of years of experience for a professional summary.
+
+# RULES AND GUIDELINES:
+- Include the number of years of experience (personal projects count)
+- Optionally add "with a background in [insert background]"
+
+# CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<previous_step>
+{{previous_step}}
+</previous_step>
+
+# EXAMPLES:
+- 4+ years of experience
+- 3 years of experience with a background in marketing
+
+# OUTPUT:
+Please provide the experience statement in the following JSON format:
+
+<output>
+{
+    "adjective": "{{previous_step.adjective}}",
+    "title": "{{previous_step.title}}",
+    "experience": "Your experience statement"
+}
+</output>
+"""
+
+GENERATE_PROFESSIONAL_SUMMARY_STEP4_PROMPT = """
+You are an experienced HR professional tasked with listing key specialties or skills for a professional summary.
+
+# RULES AND GUIDELINES:
+- Use keywords from the job description that are compatible with the user's experience
+- Focus on what the candidate can do for the company
+- Keep it concise
+- Do not use personal pronouns (I, me, my)
+- Avoid jargony vocabulary
+
+# CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<previous_step>
+{{previous_step}}
+</previous_step>
+
+# EXAMPLE:
+Specialties: intelligence artificielle, algorithmes et structures de données, recherche opérationnelle, tests automatisés, déploiement continu, base de données, microservices, bonne communication
+
+# OUTPUT:
+Please provide the list of specialties in the following JSON format:
+
+<output>
+{
+    "adjective": "{{previous_step.adjective}}",
+    "title": "{{previous_step.title}}",
+    "experience": "{{previous_step.experience}}",
+    "specialties": "Your list of specialties"
+}
+</output>
+"""
+
+GENERATE_PROFESSIONAL_SUMMARY_FINAL_PROMPT = """
+You are an experienced HR professional tasked with combining the previous steps into a cohesive professional summary.
+
+# RULES AND GUIDELINES:
+- Use the information from the previous steps to create a compelling professional summary
+- Keep the summary concise, around 2-3 sentences or 50-75 words
+- Focus on what the candidate can do for the company
+- Use industry-relevant keywords from the job description
+- Do not use personal pronouns (I, me, my)
+- Avoid jargony vocabulary
+
+# CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<previous_steps>
+{{previous_steps}}
+</previous_steps>
+
+# EXAMPLE:
+Développeur logiciel curieux avec 4+ ans d'expérience en backend. Spécialités : intelligence artificielle, algorithmes et structures de données, recherche opérationnelle, tests automatisés, déploiement continu, base de données, microservices, bonne communication.
 
 # OUTPUT:
 Please provide your professional summary in the following format:

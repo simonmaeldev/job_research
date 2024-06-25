@@ -417,13 +417,41 @@ class JobSearchAssistant:
         return os.path.join(output_path, "cover_letter.pdf")
 
     def generate_resume_professional_summary(self, job_desc: json):
-        # Step 1: Generate professional summary
-        prompt = GENERATE_PROFESSIONAL_SUMMARY_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        # Step 1: Generate adjective
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP1_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         response = query_llm(prompt, model="sonnet")
+        step1_result = json.loads(search_for_tag(response, "output"))
+
+        # Step 2: Generate job title or professional field
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP2_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        prompt = prompt.replace("{{previous_step}}", json.dumps(step1_result))
+        response = query_llm(prompt, model="sonnet")
+        step2_result = json.loads(search_for_tag(response, "output"))
+
+        # Step 3: Generate experience statement
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP3_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        prompt = prompt.replace("{{previous_step}}", json.dumps(step2_result))
+        response = query_llm(prompt, model="sonnet")
+        step3_result = json.loads(search_for_tag(response, "output"))
+
+        # Step 4: Generate specialties
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP4_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        prompt = prompt.replace("{{previous_step}}", json.dumps(step3_result))
+        response = query_llm(prompt, model="sonnet")
+        step4_result = json.loads(search_for_tag(response, "output"))
+
+        # Final step: Combine all steps into a professional summary
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_FINAL_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        prompt = prompt.replace("{{previous_steps}}", json.dumps(step4_result))
+        response = query_llm(prompt, model="sonnet")
         professional_summary = search_for_tag(response, "professional_summary")
-        
-        # Step 2: Generate LaTeX resume
+
+        # Generate LaTeX resume
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         with open(os.path.join(os.path.dirname(__file__), "resume_template.tex"), "r") as f:
@@ -431,21 +459,21 @@ class JobSearchAssistant:
         prompt = prompt.replace("{{latex_template}}", resume_latex_template)
         response = query_llm(prompt)
         resume_tex = search_for_tag(response, "resume_latex")
-        
-        # Step 3: Save LaTeX file
+
+        # Save LaTeX file
         resume_tex_path = os.path.join(self.output_dir, "resume.tex")
         with open(resume_tex_path, "w") as f:
             f.write(resume_tex)
-        
-        # Step 4: Convert LaTeX to PDF
+
+        # Convert LaTeX to PDF
         os.system(f"pdflatex -output-directory={self.output_dir} {resume_tex_path}")
-        
-        # Step 5: Clean up auxiliary files
+
+        # Clean up auxiliary files
         for ext in [".aux", ".log", ".out"]:
             aux_file = os.path.join(self.output_dir, f"resume{ext}")
             if os.path.exists(aux_file):
                 os.remove(aux_file)
-        
+
         return os.path.join(self.output_dir, "resume.pdf")
 
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
