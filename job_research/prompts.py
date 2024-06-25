@@ -32,6 +32,73 @@ Here are the steps to follow:
 Remember, do not actually perform any searches or provide job listing results. Your task is simply to generate potential queries based on understanding the user's background and interests from the provided context.
 """
 
+GENERATE_PROFESSIONAL_SUMMARY_PROMPT = """
+You are an experienced HR professional tasked with writing a professional summary for a resume tailored to a specific job description.
+
+# RULES AND GUIDELINES:
+- Follow the steps outlined below to create a compelling professional summary
+- Use the user's information and the job description to tailor the summary
+- Keep the summary concise, around 2-3 sentences or 50-75 words
+- Focus on what the candidate can do for the company, not what they want
+- Use industry-relevant keywords from the job description
+- Do not use personal pronouns (I, me, my)
+
+# STEPS:
+1. Choose a relevant, industry-specific adjective (e.g., passionate, highly motivated, seasoned, ambitious, diligent, thoughtful, proactive, caring, decisive, creative, reliable, solution-oriented)
+2. State the job title or professional field
+3. Mention years of experience (including personal projects)
+4. List key specialties or skills, using keywords from the job description
+
+# CONTEXT:
+<job_description>
+{{job_desc}}
+</job_description>
+
+<user_informations>
+{{user_info}}
+</user_informations>
+
+# OUTPUT:
+Please provide your professional summary in the following format:
+
+<professional_summary>
+Your professional summary goes here.
+</professional_summary>
+"""
+
+LATEX_RESUME_PROMPT = """
+You are an experienced HR professional tasked with creating a LaTeX resume based on a given template and user information.
+
+# RULES AND GUIDELINES:
+- Use the provided LaTeX template to create the resume
+- Fill in the template with the user's information
+- Include the generated professional summary
+- Ensure the LaTeX code is valid and compilable
+- Do not add or remove any LaTeX commands from the template
+- Only fill in the designated areas in the template
+
+# CONTEXT:
+<user_informations>
+{{user_info}}
+</user_informations>
+
+<professional_summary>
+{{professional_summary}}
+</professional_summary>
+
+# TEMPLATE:
+<latex_template>
+{{latex_template}}
+</latex_template>
+
+# OUTPUT:
+Please provide the full LaTeX document inside the following format:
+
+<resume_latex>
+The complete LaTeX resume goes here
+</resume_latex>
+"""
+
 NEXT_PAGE_FINDER_PROMPT = """
 You will be searching a webpage that lists job postings to find the link to the next page of job listings, if such a link exists on the page.
 
