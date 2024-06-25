@@ -416,6 +416,8 @@ class JobSearchAssistant:
         
         return os.path.join(output_path, "cover_letter.pdf")
 
+    #code: def generate_resume_professional_summary(self, job_desc:json): using generate_cover_letter as an example, follow the instructions in aider_instructions.md to create a resume in latex and then in pdf. prompts should go in prompts.py, write_cover_letter_prompt and latex_cover_letter_prompt are good examples on how to format the new prompts
+
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
         output_path = os.path.join(self.output_dir, dir_name)
