@@ -416,7 +416,37 @@ class JobSearchAssistant:
         
         return os.path.join(output_path, "cover_letter.pdf")
 
-    #code: def generate_resume_professional_summary(self, job_desc:json): using generate_cover_letter as an example, follow the instructions in aider_instructions.md to create a resume in latex and then in pdf. prompts should go in prompts.py, write_cover_letter_prompt and latex_cover_letter_prompt are good examples on how to format the new prompts
+    def generate_resume_professional_summary(self, job_desc: json):
+        # Step 1: Generate professional summary
+        prompt = GENERATE_PROFESSIONAL_SUMMARY_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        response = query_llm(prompt, model="sonnet")
+        professional_summary = search_for_tag(response, "professional_summary")
+        
+        # Step 2: Generate LaTeX resume
+        prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
+        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        with open(os.path.join(os.path.dirname(__file__), "resume_template.tex"), "r") as f:
+            resume_latex_template = f.read()
+        prompt = prompt.replace("{{latex_template}}", resume_latex_template)
+        response = query_llm(prompt)
+        resume_tex = search_for_tag(response, "resume_latex")
+        
+        # Step 3: Save LaTeX file
+        resume_tex_path = os.path.join(self.output_dir, "resume.tex")
+        with open(resume_tex_path, "w") as f:
+            f.write(resume_tex)
+        
+        # Step 4: Convert LaTeX to PDF
+        os.system(f"pdflatex -output-directory={self.output_dir} {resume_tex_path}")
+        
+        # Step 5: Clean up auxiliary files
+        for ext in [".aux", ".log", ".out"]:
+            aux_file = os.path.join(self.output_dir, f"resume{ext}")
+            if os.path.exists(aux_file):
+                os.remove(aux_file)
+        
+        return os.path.join(self.output_dir, "resume.pdf")
 
     def create_resume_cover_letter(self, job_desc: json, dir_name: str):
         # Create the directory
