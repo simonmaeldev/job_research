@@ -7,11 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "<=3.13,>=3.10"
-crewai = {extras = ["tools"], version = "^0.28.8"}
 anthropic = "^0.25.8"
 lxml = "^5.2.1"
 fake-useragent = "^1.5.1"
 ollama = "^0.2.0"
+openai = "^1.37.0"
+beautifulsoup4 = "^4.12.3"
+python-dotenv = "^1.0.1"
+numpy = "^2.0.1"
 
 
 [build-system]

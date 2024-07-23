@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+#from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 import json
 from llm import query_llm, search_for_tag
@@ -10,10 +10,10 @@ import os
 import sqlite3
 from urllib.parse import urlparse
 import datetime
-from pathlib import Path
+import numpy as np
 
 class JobSearchAssistant:
-    def __init__(self, user_context_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir"):
+    def __init__(self, user_context_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5):
         self.conn = sqlite3.connect('jobs.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS jobs (
@@ -50,6 +50,7 @@ class JobSearchAssistant:
         self.verbose = verbose
         self.skip_domains = skip_domains
         self.output_dir = output_dir
+        self.QUERY_LIMIT = query_limit
 
     def verbose_print(self, msg):
         if self.verbose:
@@ -284,10 +285,16 @@ class JobSearchAssistant:
         prompt = JOB_RELEVANCE_PROMPT.replace("{{DOMAIN_OF_INTEREST}}", self.domain_of_interest)
         prompt = prompt.replace("{{USER_CONTEXT}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{JOB_DESCRIPTION}}", job["description"])
-        response = query_llm(prompt)
-        self.verbose_print(response["response"])
-        res = search_for_tag(response, "answer")
-        return res == "relevant"
+        # vote to determine if job is relevant
+        all_res = []
+        models = ["sonnet", "sonnet", "sonnet", "gpt-4o-mini", "gpt-4o-mini", "gpt-4o-mini"]
+        for model in models:
+            response = query_llm(prompt, model=model)
+            self.verbose_print(response["response"])
+            res = search_for_tag(response, "answer")
+            all_res.append(1 if res == "relevant" else 0)
+        return np.mean(all_res) >= 0.5
+        
 
     def score_description(self, desc):
         prompt = JOB_SCORE_PROMPT.replace("{{DOMAIN_OF_COMPETENCE}}", self.domain_of_interest)
@@ -357,7 +364,7 @@ class JobSearchAssistant:
             all_res = []
             for query in self.job_search_plan:
                 res = search_serper(query)
-                for result in res:
+                for result in res[:self.QUERY_LIMIT]: #limit links per query
                     link = result['link']
                     if not any(r['link'] == link for r in all_res):
                         all_res.append(result)
@@ -365,7 +372,7 @@ class JobSearchAssistant:
             print(f'Got {len(self.initial_links)} to process')
             self.process_initial_links()
             print('all initial links are processed!')
-            #self.process_descriptions()
+            self.process_descriptions()
 
     def generate_cover_letter(self, job_desc: json, output_path: str):
         # Step 1: Get pain points
@@ -536,7 +543,8 @@ class JobSearchAssistant:
 USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, skip_domains=[])
+assistant.run()
+#assistant.plan_job_search()
 #assistant.process_descriptions()
 #assistant.score_jobs()
-#assistant.plan_job_search()
-assistant.create_outputs_from_db(6)
+#assistant.create_outputs_from_db(6)
