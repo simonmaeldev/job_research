@@ -143,7 +143,7 @@ class JobSearchAssistant:
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
         prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
         query_list = []
@@ -158,7 +158,7 @@ class JobSearchAssistant:
     def next_page_finder(self, url:str) -> str:
         prompt = NEXT_PAGE_FINDER_PROMPT
         prompt_copy = prompt.replace("{{URL}}", url)
-        response = query_llm(prompt_copy, "sonnet")
+        response = query_llm(prompt_copy, "gpt-4o-mini")
         self.verbose_print(response["response"])
         res = search_for_tag(response, "result").strip()
         if res == 'No "next page" link found on this page.' or res == url:
@@ -370,7 +370,7 @@ class JobSearchAssistant:
     def generate_cover_letter(self, job_desc: json, output_path: str):
         # Step 1: Get pain points
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         pain_points = search_for_tag(response, "pain_points")
         print(pain_points)
         job_desc['challengesAndPainPoints'] = pain_points
@@ -378,7 +378,7 @@ class JobSearchAssistant:
         # Step 2: Connect with the reader
         prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         hook = search_for_tag(response, "hook")
         print(hook)
         print(f"hook : {len(hook.split(' '))} words")
@@ -388,7 +388,7 @@ class JobSearchAssistant:
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         cl_txt = search_for_tag(response, "cover_letter")
         cover_letter = json.loads(cl_txt, strict=False)
         print(f"body: {len(cover_letter['body'].split(' '))} words")
@@ -420,7 +420,7 @@ class JobSearchAssistant:
         # Step 1: Generate adjective
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP1_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         step1_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step1_result))
 
@@ -428,7 +428,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP2_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step1_result))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         step2_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step2_result))
 
@@ -436,7 +436,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP3_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step2_result))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         step3_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step3_result))
 
@@ -444,7 +444,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP4_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step3_result))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         step4_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step4_result))
 
@@ -452,7 +452,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_FINAL_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_steps}}", json.dumps(step4_result))
-        response = query_llm(prompt, model="sonnet")
+        response = query_llm(prompt, model="gpt-4o-mini")
         professional_summary = search_for_tag(response, "professional_summary")
         print(f"full professional summary :\n{professional_summary}")
 

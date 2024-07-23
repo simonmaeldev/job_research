@@ -14,6 +14,7 @@ MODEL_NAMES = {
     "gpt4": "gpt-4-turbo-preview",
     "llama3:8b": "llama3:8b",
     "llama3:instruct": "llama3:instruct",
+    "gpt-4o-mini": "gpt-4o-mini",
 }
 
 MODEL_PRICING = {
@@ -24,9 +25,10 @@ MODEL_PRICING = {
     "gpt4": {"input_cost_per_mtok": 10.00, "output_cost_per_mtok": 30.0},
     "llama3:8b": {"input_cost_per_mtok": 0.0, "output_cost_per_mtok": 0.0},
     "llama3:instruct": {"input_cost_per_mtok": 0.0, "output_cost_per_mtok": 0.0},
+    "gpt-4o-mini": {"input_cost_per_mtok": 0.15, "output_cost_per_mtok": 0.6},
 }
 
-def query_llm(query: str, model: str = "haiku", api_key: str = None) -> dict:
+def query_llm(query: str, model: str = "gpt-4o-mini", api_key: str = None) -> dict:
     """
     Query an LLM (Anthropic or OpenAI) with the given query and model.
 
