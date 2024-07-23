@@ -168,6 +168,7 @@ jobs.db
 db
 user_context.md
 user_context.json
+user_want.md
 .aider*
 output_dir
 aider_instructions.md

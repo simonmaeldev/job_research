@@ -1,9 +1,9 @@
 PLAN_JOB_SEARCH_PROMPT = """
 You will be provided with the following user context:
 
-<user_context>
-{{user_context}}
-</user_context>
+<user_want>
+{{user_want}}
+</user_want>
 
 Your goal is to create queries that could be used to search for job websites that match the user's background and interests based on the provided context.
 
@@ -440,6 +440,11 @@ You will be acting as an experienced HR professional specializing in the followi
 Your task is to determine whether a given job is a good fit for the user based on their personal and professional experiences, as well as the job description provided.
 
 This is the user description in markdown (including who he is, what he is looking for, and it's full CV):
+
+<USER_WANT>
+{{USER_WANT}}
+</USER_WANT>
+
 
 <USER_CONTEXT>
 {{USER_CONTEXT}}

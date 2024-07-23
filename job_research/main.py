@@ -13,7 +13,7 @@ import datetime
 import numpy as np
 
 class JobSearchAssistant:
-    def __init__(self, user_context_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5):
+    def __init__(self, user_context_file, user_want_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5):
         self.conn = sqlite3.connect('jobs.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS jobs (
@@ -41,6 +41,8 @@ class JobSearchAssistant:
         scrape_api_key = os.getenv('SCRAPEOPS_API_KEY')
         with open(user_context_file, "r", encoding="utf-8") as file:
             self.user_context = json.load(file)
+        with open(user_want_file, "r", encoding="utf-8") as file:
+            self.user_want = json.load(file)
         self.job_search_plan = []
         self.initial_links = []
         self.scraper = Scraper(scrape_api_key)
@@ -143,7 +145,7 @@ class JobSearchAssistant:
 
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
-        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
+        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_want))
         response = query_llm(prompt, model="gpt-4o-mini")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
@@ -283,6 +285,7 @@ class JobSearchAssistant:
 
     def is_job_relevant(self, job:dict) -> bool:
         prompt = JOB_RELEVANCE_PROMPT.replace("{{DOMAIN_OF_INTEREST}}", self.domain_of_interest)
+        prompt = prompt.replace("{{USER_WANT}}", json.dumps(self.user_want))
         prompt = prompt.replace("{{USER_CONTEXT}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{JOB_DESCRIPTION}}", job["description"])
         # vote to determine if job is relevant
@@ -540,7 +543,7 @@ class JobSearchAssistant:
         
         print(f"Outputs created for job {id} in directory {dir_name}")
 
-USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
+USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json", "user_want.md")
 
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, skip_domains=[])
 assistant.run()
