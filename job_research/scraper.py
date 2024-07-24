@@ -73,7 +73,8 @@ class Scraper:
         domain = self.get_domain_name(url)
         lvl = self.get_level(domain) or 0
         if lvl > 3:
-            return []
+            print(f"lvl: {lvl} has reach max for url {url}")
+            return ""
         proxy_url = self.get_scrapeops_url(url, lvl)
         status, data = self.process_request(proxy_url)
         if status == 500:
@@ -81,13 +82,14 @@ class Scraper:
             return self.retry_with_scrapeops(url)
         logging.info(f"Successfully scraped URL: {url} with level {lvl}")
         print(f"Successfully scraped URL: {url} with level {lvl}")
-        return [] if status in self.handled_status_codes else data
+        return "" if status in self.handled_status_codes else data
 
     def retry_with_backoff(self, url: str, retry_count: int = 0, delay: int = None) -> Iterator[dict]:
         delay = delay or self.initial_delay
         if retry_count >= self.max_retries:
             logging.error(f"Maximum retries reached for URL: {url}. Retrying using ScrapeOps.")
             print(f"Maximum retries reached for URL: {url}. Retrying using ScrapeOps.")
+            time.sleep(delay)
             return self.retry_with_scrapeops(url)
 
         try:
