@@ -113,6 +113,7 @@ def search_for_tag(answer: dict, tag: str) -> str:
     match = re.search(regex, answer["response"], re.DOTALL)
     if match:
         return match.group(1)
+    print(f"============= ALERT : no tag {tag} found. Return None. Text:\n{answer["response"]}")
     return None
 
 def prompt_formatter(prompt_to_format: str) -> str:
