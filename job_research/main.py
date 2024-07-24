@@ -58,6 +58,15 @@ class JobSearchAssistant:
             date = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
         assert len(date) == 10 and date.count('-') == 2
         self.date = date
+        self.cost = 0
+
+    def get_cost(self):
+        return self.cost
+
+    def query_llm(self, prompt, model="gpt-4o-mini"):
+        response = query_llm(prompt, model)
+        self.cost += response["cost"]
+        return response
 
     def verbose_print(self, msg):
         if self.verbose:
@@ -151,7 +160,7 @@ class JobSearchAssistant:
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
         prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         self.verbose_print(f"plan job search response : {response}")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
@@ -168,7 +177,7 @@ class JobSearchAssistant:
         prompt = NEXT_PAGE_FINDER_PROMPT
         prompt_copy = prompt.replace("{{URL}}", url)
         self.verbose_print(f"url scanned: {url}")
-        response = query_llm(prompt_copy, "gpt-4o-mini")
+        response = self.query_llm(prompt_copy, "gpt-4o-mini")
         self.verbose_print(response["response"])
         res = search_for_tag(response, "result").strip()
         if res == 'No "next page" link found on this page.' or res == url:
@@ -185,7 +194,7 @@ class JobSearchAssistant:
             self.verbose_print(f"url is not in db. analysing : {url}")
             prompt = IS_URL_JOB_DESCRIPTION_PROMPT
             prompt_copy = prompt.replace("{{URL}}", url)
-            response = query_llm(prompt_copy, "haiku")
+            response = self.query_llm(prompt_copy, "haiku")
             self.verbose_print(response["response"])
             res = search_for_tag(response, "answer").replace("\n", "")
             is_job_page = "Job Description" in res
@@ -228,7 +237,7 @@ class JobSearchAssistant:
                 }
                 json_string = json.dumps(element_data)
                 prompt_copy = GET_LINKS_PROMPT.replace("{{json_string}}", json_string)
-                response = query_llm(prompt_copy)
+                response = self.query_llm(prompt_copy)
                 self.verbose_print(response["response"])
                 res = search_for_tag(response, "answer")
                 is_job_page = res == "yes"
@@ -272,7 +281,7 @@ class JobSearchAssistant:
     def format_text_to_markdown(self, text):
         prompt = MARKDOWN_FORMATTER_PROMPT
         prompt_copy = prompt.replace("{{RAW_JOB_DESCRIPTION}}", text)
-        response = query_llm(prompt_copy, "haiku")
+        response = self.query_llm(prompt_copy, "haiku")
         self.verbose_print(response["response"])
         desc = search_for_tag(response, "formatted_job_description")
         title = search_for_tag(response, "job_title")
@@ -299,7 +308,7 @@ class JobSearchAssistant:
         all_res = []
         models = ["sonnet", "sonnet", "sonnet", "gpt-4o-mini", "gpt-4o-mini", "gpt-4o-mini"]
         for model in models:
-            response = query_llm(prompt, model=model)
+            response = self.query_llm(prompt, model=model)
             self.verbose_print(response["response"])
             res = search_for_tag(response, "answer")
             all_res.append(1 if res == "relevant" else 0)
@@ -312,7 +321,7 @@ class JobSearchAssistant:
         prompt = JOB_SCORE_PROMPT.replace("{{DOMAIN_OF_COMPETENCE}}", self.domain_of_interest)
         prompt = prompt.replace("{{USER_CONTEXT}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{JOB_DESCRIPTION}}", desc)
-        response = query_llm(prompt)
+        response = self.query_llm(prompt)
         self.verbose_print(response["response"])
         res = search_for_tag(response, "answer")
         return res
@@ -389,7 +398,7 @@ class JobSearchAssistant:
     def generate_cover_letter(self, job_desc: json, output_path: str):
         # Step 1: Get pain points
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         pain_points = search_for_tag(response, "pain_points")
         print(pain_points)
         job_desc['challengesAndPainPoints'] = pain_points
@@ -397,7 +406,7 @@ class JobSearchAssistant:
         # Step 2: Connect with the reader
         prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         hook = search_for_tag(response, "hook")
         print(hook)
         print(f"hook : {len(hook.split(' '))} words")
@@ -407,7 +416,7 @@ class JobSearchAssistant:
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         cl_txt = search_for_tag(response, "cover_letter")
         cover_letter = json.loads(cl_txt, strict=False)
         print(f"body: {len(cover_letter['body'].split(' '))} words")
@@ -418,7 +427,7 @@ class JobSearchAssistant:
         with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r") as f:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
-        response = query_llm(prompt)
+        response = self.query_llm(prompt)
         cl_tex = search_for_tag(response, "cover_latex")
         cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
         with open(cover_letter_tex_path, "w") as f:
@@ -439,7 +448,7 @@ class JobSearchAssistant:
         # Step 1: Generate adjective
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP1_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         step1_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step1_result))
 
@@ -447,7 +456,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP2_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step1_result))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         step2_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step2_result))
 
@@ -455,7 +464,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP3_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step2_result))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         step3_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step3_result))
 
@@ -463,7 +472,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP4_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_step}}", json.dumps(step3_result))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         step4_result = json.loads(search_for_tag(response, "output"))
         print(json.dumps(step4_result))
 
@@ -471,7 +480,7 @@ class JobSearchAssistant:
         prompt = GENERATE_PROFESSIONAL_SUMMARY_FINAL_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_steps}}", json.dumps(step4_result))
-        response = query_llm(prompt, model="gpt-4o-mini")
+        response = self.query_llm(prompt, model="gpt-4o-mini")
         professional_summary = search_for_tag(response, "professional_summary")
         print(f"full professional summary :\n{professional_summary}")
 
@@ -483,7 +492,7 @@ class JobSearchAssistant:
             resume_latex_template = f.read()
         resume_latex_template = resume_latex_template.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{latex_template}}", resume_latex_template)
-        response = query_llm(prompt)
+        response = self.query_llm(prompt)
         resume_tex = search_for_tag(response, "resume_latex")
 
         # Save LaTeX file
@@ -556,8 +565,12 @@ USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
 
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE, verbose=True, max_workers=1, skip_domains=[])
-#assistant.run()
-#assistant.plan_job_search()
-assistant.process_descriptions('2024-07-23')
-#assistant.score_jobs()
-#assistant.create_outputs_from_db(6)
+
+try:
+    #assistant.run()
+    #assistant.plan_job_search()
+    assistant.process_descriptions('2024-07-23')
+    #assistant.score_jobs()
+    #assistant.create_outputs_from_db(6)
+finally:
+    print(f"total cost : {assistant.get_cost()} $USD")
