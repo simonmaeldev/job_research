@@ -3,9 +3,9 @@ import os
 import requests
 
 
-def search_serper(search_query):
+def search_serper(search_query, limit=10):
     search_url: str = "https://google.serper.dev/search"
-    payload = json.dumps({"q": search_query})
+    payload = json.dumps({"q": search_query, "num":limit})
     headers = {
         'X-API-KEY': os.environ['SERPER_API_KEY'],
         'content-type': 'application/json'
