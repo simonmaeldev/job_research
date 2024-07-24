@@ -11,9 +11,10 @@ import sqlite3
 from urllib.parse import urlparse
 import datetime
 import numpy as np
+import datetime
 
 class JobSearchAssistant:
-    def __init__(self, user_context_file, user_want_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5):
+    def __init__(self, user_context_file, user_want_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5, date=''):
         self.conn = sqlite3.connect('jobs.db')
         self.c = self.conn.cursor()
         self.c.execute('''CREATE TABLE IF NOT EXISTS jobs (
@@ -42,7 +43,7 @@ class JobSearchAssistant:
         with open(user_context_file, "r", encoding="utf-8") as file:
             self.user_context = json.load(file)
         with open(user_want_file, "r", encoding="utf-8") as file:
-            self.user_want = json.load(file)
+            self.user_want = file.read()
         self.job_search_plan = []
         self.initial_links = []
         self.scraper = Scraper(scrape_api_key)
@@ -53,6 +54,10 @@ class JobSearchAssistant:
         self.skip_domains = skip_domains
         self.output_dir = output_dir
         self.QUERY_LIMIT = query_limit
+        if date == '':
+            date = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+        assert len(date) == 10 and date.count('-') == 2
+        self.date = date
 
     def verbose_print(self, msg):
         if self.verbose:
@@ -129,8 +134,8 @@ class JobSearchAssistant:
         print("Link added to the database.")
 
 
-    def get_jobs_descriptions(self):
-        self.c.execute("SELECT url FROM known_links WHERE is_job_page = 1")
+    def get_jobs_descriptions(self, date):
+        self.c.execute(f"SELECT url FROM known_links WHERE is_job_page = 1 AND date > '{date}'")
         rows = self.c.fetchall()
         lst = [row[0] for row in rows]
         lst.reverse()
@@ -145,8 +150,9 @@ class JobSearchAssistant:
 
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
-        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_want))
+        prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
         response = query_llm(prompt, model="gpt-4o-mini")
+        self.verbose_print(f"plan job search response : {response}")
         self.domain_of_interest = search_for_tag(response, "domain_of_interest")
         res = search_for_tag(response, "query_list").replace('\n', '')
         query_list = []
@@ -154,13 +160,14 @@ class JobSearchAssistant:
             query_list = [query.strip(' "') for query in res.split(',')]
             self.verbose_print(f"Extracted Query List: {query_list}")
         else:
-            raise ValueError("Could not find <query_list> tag in job search plan")
+            raise ValueError("Could not find <query_list> tag in job search plan. response: {response}")
         self.job_search_plan = query_list
         return query_list
 
     def next_page_finder(self, url:str) -> str:
         prompt = NEXT_PAGE_FINDER_PROMPT
         prompt_copy = prompt.replace("{{URL}}", url)
+        self.verbose_print(f"url scanned: {url}")
         response = query_llm(prompt_copy, "gpt-4o-mini")
         self.verbose_print(response["response"])
         res = search_for_tag(response, "result").strip()
@@ -296,7 +303,9 @@ class JobSearchAssistant:
             self.verbose_print(response["response"])
             res = search_for_tag(response, "answer")
             all_res.append(1 if res == "relevant" else 0)
-        return np.mean(all_res) >= 0.5
+        mean = np.mean(all_res)
+        self.verbose_print(f"VOTE : mean: {mean}, lst: {all_res}")
+        return mean >= 0.5
         
 
     def score_description(self, desc):
@@ -349,8 +358,8 @@ class JobSearchAssistant:
                 self.verbose_print(f'is relevant : {res["is_relevant"]}')
             self.add_job(res)
 
-    def process_descriptions(self):
-        jobs = self.get_jobs_descriptions()
+    def process_descriptions(self, date):
+        jobs = self.get_jobs_descriptions(date)
         l = len(jobs)
         print(f"will process {l} jobs descriptions")
         for i, url in enumerate(jobs):
@@ -366,8 +375,8 @@ class JobSearchAssistant:
         if self.job_search_plan:
             all_res = []
             for query in self.job_search_plan:
-                res = search_serper(query)
-                for result in res[:self.QUERY_LIMIT]: #limit links per query
+                res = search_serper(query, self.QUERY_LIMIT)
+                for result in res:
                     link = result['link']
                     if not any(r['link'] == link for r in all_res):
                         all_res.append(result)
@@ -375,7 +384,7 @@ class JobSearchAssistant:
             print(f'Got {len(self.initial_links)} to process')
             self.process_initial_links()
             print('all initial links are processed!')
-            self.process_descriptions()
+            self.process_descriptions(self.date)
 
     def generate_cover_letter(self, job_desc: json, output_path: str):
         # Step 1: Get pain points
@@ -543,11 +552,12 @@ class JobSearchAssistant:
         
         print(f"Outputs created for job {id} in directory {dir_name}")
 
-USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json", "user_want.md")
+USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
+USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
 
-assistant = JobSearchAssistant(USER_CONTEXT_FILE, verbose=True, max_workers=1, skip_domains=[])
-assistant.run()
+assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE, verbose=True, max_workers=1, skip_domains=[])
+#assistant.run()
 #assistant.plan_job_search()
-#assistant.process_descriptions()
+assistant.process_descriptions('2024-07-23')
 #assistant.score_jobs()
 #assistant.create_outputs_from_db(6)
