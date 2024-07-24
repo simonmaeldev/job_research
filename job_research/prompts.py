@@ -1,9 +1,9 @@
 PLAN_JOB_SEARCH_PROMPT = """
 You will be provided with the following user context:
 
-<user_want>
-{{user_want}}
-</user_want>
+<user_context>
+{{user_context}}
+</user_context>
 
 Your goal is to create queries that could be used to search for job websites that match the user's background and interests based on the provided context.
 
