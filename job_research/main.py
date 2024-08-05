@@ -485,6 +485,7 @@ class JobSearchAssistant:
         print(f"full professional summary :\n{professional_summary}")
 
         # return self.generate_resume_latex(professional_summary, job_desc, output_path)
+        #code: save professional_summary in .txt file
 
     def generate_resume_latex(self, professional_summary, job_desc, output_path):
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
