@@ -1,6 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM Activate Poetry virtual environment
+call poetry env use python
+call poetry shell
+
 REM Prompt user for input
 set /p TITLE="Enter job title: "
 set /p COMPANY="Enter company name: "
@@ -16,8 +20,15 @@ REM Remove the temporary file
 del description_temp.txt
 
 REM Run the Python script with the provided parameters
-python -c "from main import JobSearchAssistant, USER_CONTEXT_FILE, USER_WANT_FILE; assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE); assistant.create_outputs_from_params('%TITLE%', '%COMPANY%', r'%DESCRIPTION%')"
+poetry run python -c "from main import JobSearchAssistant, USER_CONTEXT_FILE, USER_WANT_FILE; assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE); assistant.create_outputs_from_params('%TITLE%', '%COMPANY%', r'%DESCRIPTION%')"
 
 echo.
 echo Outputs created successfully!
+
+REM Deactivate Poetry virtual environment
+call poetry env info --path > nul 2>&1
+if %errorlevel% equ 0 (
+    call poetry shell --quiet exit
+)
+
 pause
