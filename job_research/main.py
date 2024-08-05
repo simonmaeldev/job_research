@@ -484,7 +484,9 @@ class JobSearchAssistant:
         professional_summary = search_for_tag(response, "professional_summary")
         print(f"full professional summary :\n{professional_summary}")
 
-        # Generate LaTeX resume
+        # return self.generate_resume_latex(professional_summary, job_desc, output_path)
+
+    def generate_resume_latex(self, professional_summary, job_desc, output_path):
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{job_desc}}", json.dumps(job_desc))
