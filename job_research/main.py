@@ -567,6 +567,22 @@ class JobSearchAssistant:
         
         print(f"Outputs created for job {id} in directory {dir_name}")
 
+    def create_outputs_from_params(self, title: str, company: str, description: str):
+        # Create a JSON object with the provided information
+        job_json = {
+            "title": title,
+            "company": company,
+            "description": description
+        }
+        
+        # Create a directory for outputs
+        dir_name = f"{title}_{company}"
+        dir_name = dir_name.replace(' ', '_')
+        
+        self.create_resume_cover_letter(job_json, dir_name)
+        
+        print(f"Outputs created for job '{title}' at '{company}' in directory {dir_name}")
+
 USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
 
