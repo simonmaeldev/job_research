@@ -424,13 +424,13 @@ class JobSearchAssistant:
         # Step 4: generate cover letter in tex and pdf
         prompt = LATEX_COVER_LETTER_PROMPT.replace("{{cover_letter}}", json.dumps(cover_letter))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r") as f:
+        with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r", encoding="utf-8") as f:
             cover_latex_template = f.read()
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         response = self.query_llm(prompt)
         cl_tex = search_for_tag(response, "cover_latex")
         cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
-        with open(cover_letter_tex_path, "w") as f:
+        with open(cover_letter_tex_path, "w", encoding="utf-8") as f:
             f.write(cl_tex)
         
         # Convert LaTeX to PDF
@@ -487,14 +487,14 @@ class JobSearchAssistant:
         # return self.generate_resume_latex(professional_summary, job_desc, output_path)
         # Save professional_summary in .txt file
         summary_file_path = os.path.join(output_path, "professional_summary.txt")
-        with open(summary_file_path, "w") as f:
+        with open(summary_file_path, "w", encoding="utf-8") as f:
             f.write(professional_summary)
 
     def generate_resume_latex(self, professional_summary, job_desc, output_path):
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{job_desc}}", json.dumps(job_desc))
-        with open(os.path.join(os.path.dirname(__file__), "resume_template.tex"), "r") as f:
+        with open(os.path.join(os.path.dirname(__file__), "resume_template.tex"), "r", encoding="utf-8") as f:
             resume_latex_template = f.read()
         resume_latex_template = resume_latex_template.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{latex_template}}", resume_latex_template)
@@ -503,7 +503,7 @@ class JobSearchAssistant:
 
         # Save LaTeX file
         resume_tex_path = os.path.join(output_path, "resume.tex")
-        with open(resume_tex_path, "w") as f:
+        with open(resume_tex_path, "w", encoding="utf-8") as f:
             f.write(resume_tex)
 
         # Convert LaTeX to PDF
@@ -587,12 +587,12 @@ USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
 
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE, verbose=True, max_workers=1, skip_domains=[], date='2024/07/30')
-
-try:
-    #assistant.run()
-    #assistant.plan_job_search()
-    assistant.process_descriptions('2024/07/30')
-    #assistant.score_jobs()
-    #assistant.create_outputs_from_db(227)
-finally:
-    print(f"total cost : {assistant.get_cost()} $USD")
+if __name__ == "__main__":
+    try:
+        #assistant.run()
+        #assistant.plan_job_search()
+        assistant.process_descriptions('2024/07/30')
+        #assistant.score_jobs()
+        #assistant.create_outputs_from_db(227)
+    finally:
+        print(f"total cost : {assistant.get_cost()} $USD")
