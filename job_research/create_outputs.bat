@@ -18,14 +18,6 @@ set /p DESCRIPTION=<description_temp.txt
 REM Remove the temporary file
 del description_temp.txt
 
-REM Escape special characters in the description
-set "DESCRIPTION=!DESCRIPTION:^=^^!"
-set "DESCRIPTION=!DESCRIPTION:&=^&!"
-set "DESCRIPTION=!DESCRIPTION:|=^|!"
-set "DESCRIPTION=!DESCRIPTION:<=^<!"
-set "DESCRIPTION=!DESCRIPTION:>=^>!"
-set "DESCRIPTION=!DESCRIPTION:^=^^!"
-
 REM Run the Python script with the provided parameters and get the cost
 call poetry run python -c "from main import JobSearchAssistant, USER_CONTEXT_FILE, USER_WANT_FILE; assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE); assistant.create_outputs_from_params('%TITLE%', '%COMPANY%', r'%DESCRIPTION%'); print(f'total cost : {assistant.get_cost()} $USD')"
 
