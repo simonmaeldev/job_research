@@ -16,6 +16,8 @@ if __name__ == "__main__":
     user_want_file = os.path.join(current_dir, "user_want.md")
 
     # Create JobSearchAssistant instance
+    print(current_dir)
+    input()
     assistant = JobSearchAssistant(user_context_file, user_want_file, verbose=True, max_workers=1)
 
     # Get input from user
