@@ -529,6 +529,7 @@ class JobSearchAssistant:
         # Save the resume and cover letter as PDF
         resume_file = os.path.join(output_path, "resume.pdf")
         cover_letter_file = os.path.join(output_path, "cover_letter.pdf")
+        return output_path
 
     def run(self):
         self.plan_job_search()
@@ -579,9 +580,10 @@ class JobSearchAssistant:
         dir_name = f"{title}_{company}"
         dir_name = dir_name.replace(' ', '_')
         
-        self.create_resume_cover_letter(job_json, dir_name)
+        output_path = self.create_resume_cover_letter(job_json, dir_name)
         
         print(f"Outputs created for job '{title}' at '{company}' in directory {dir_name}")
+        return output_path
 
 USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
 USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
