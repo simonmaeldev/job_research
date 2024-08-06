@@ -46,13 +46,19 @@ description = sys.stdin.read().strip()
 
 output_path = assistant.create_outputs_from_params(title, company, description)
 
-print(f"\\nOutputs created successfully in: {output_path}")
-print("Opening file explorer...")
-os.startfile(output_path)
-
-print("Press Enter to exit.")
-input()
+print(f"\\nOutputs created successfully in: {{output_path}}")
+print(output_path)  # Print the output_path so we can capture it
         """
     ]
 
-    subprocess.run(main_script, cwd=current_dir)
+    result = subprocess.run(main_script, cwd=current_dir, capture_output=True, text=True)
+    
+    # Extract the output_path from the subprocess output
+    output_lines = result.stdout.strip().split('\n')
+    output_path = output_lines[-1]  # The last line should be our output_path
+
+    print(f"Opening file explorer at: {output_path}")
+    os.startfile(output_path)
+
+    print("Press Enter to exit.")
+    input()
