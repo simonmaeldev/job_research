@@ -44,9 +44,13 @@ print("Enter job description:")
 print("(Enter your input. Press Ctrl+Z and Enter on a new line to finish.)")
 description = sys.stdin.read().strip()
 
-assistant.create_outputs_from_params(title, company, description)
+output_path = assistant.create_outputs_from_params(title, company, description)
 
-print("\\nOutputs created successfully. Press Enter to exit.")
+print(f"\\nOutputs created successfully in: {output_path}")
+print("Opening file explorer...")
+os.startfile(output_path)
+
+print("Press Enter to exit.")
 input()
         """
     ]
