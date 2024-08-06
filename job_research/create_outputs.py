@@ -27,12 +27,12 @@ if __name__ == "__main__":
     main_script = [
         python_executable,
         "-c",
-        """
+        f"""
 import os
 import sys
 from main import JobSearchAssistant
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
+current_dir = {repr(current_dir)}
 user_context_file = os.path.join(current_dir, "user_context.json")
 user_want_file = os.path.join(current_dir, "user_want.md")
 
