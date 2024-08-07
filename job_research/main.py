@@ -583,6 +583,9 @@ class JobSearchAssistant:
         output_path = self.create_resume_cover_letter(job_json, dir_name)
         
         print(f"Outputs created for job '{title}' at '{company}' in directory {dir_name}")
+        
+        print(f"Opening file explorer at: {output_path}")
+        os.startfile(output_path)
         return output_path
 
 USER_CONTEXT_FILE = os.path.join(os.path.dirname(__file__), "user_context.json")
