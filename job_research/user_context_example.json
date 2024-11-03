@@ -1,0 +1,69 @@
+{
+    "targetJob": "Describe your ideal job. Example: 'I want to work as a full-time software developer, specializing in backend development with Python. I'm particularly interested in AI and machine learning projects.'",
+    "personalInfo": {
+      "name": "Your Full Name",
+      "tagline": "A brief professional headline describing you. Example: 'Full Stack Developer | AI Enthusiast | Problem Solver'",
+      "location": "Your complete address",
+      "email": "your.email@example.com",
+      "phone": "Your phone number with country code, e.g. (+1)555-0123",
+      "linkedin": "Your LinkedIn profile URL",
+      "github": "Your GitHub profile URL",
+      "youtube": "Your YouTube channel URL (if applicable)"
+    },
+    "summary": "A detailed professional summary (2-4 paragraphs) highlighting your expertise, achievements, and career goals. Write this in the language you prefer for your job search.",
+    "mainSkills": [
+      "Your primary technical skill",
+      "Another main skill",
+      "A third key skill"
+    ],
+    "experience": [
+      {
+        "company": "Company Name",
+        "title": "Your Job Title",
+        "duration": "Start Date - End Date (format: month year - month year)",
+        "location": "City, Region/State, Country",
+        "projects": [
+          {
+            "name": "Project Name",
+            "duration": "MM/YYYY - MM/YYYY",
+            "details": [
+              "Specific achievement or responsibility with quantifiable results",
+              "Another key contribution",
+              "Technical implementation detail"
+            ]
+          }
+        ]
+      }
+    ],
+    "education": [
+      {
+        "institution": "University/School Name",
+        "degree": "Type of Degree/Certification",
+        "field": "Field of Study",
+        "duration": "Start Year - End Year"
+      }
+    ],
+    "projects": [
+      {
+        "name": "Personal/Professional Project Name",
+        "duration": "Time Period (format: month year - month year)",
+        "description": "Brief description of the project, technologies used, and outcomes"
+      }
+    ],
+    "skills": [
+      "Technical Skill 1",
+      "Technical Skill 2",
+      "Soft Skill 1",
+      "Domain Knowledge 1"
+    ],
+    "hobbies": [
+      "Group your hobbies by category. Example: 'Sports: running, swimming'",
+      "Another category of interests",
+      "Personal projects or activities"
+    ],
+    "jobPreferences": {
+      "field": "Preferred industry or domain",
+      "experience": "Required experience level (entry/mid/senior)",
+      "location": "Preferred work location and/or remote work preferences"
+    }
+}
