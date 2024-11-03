@@ -168,6 +168,13 @@ class JobSearchAssistant:
         print("Job added to the database.")
 
     def update_score(self, id, score):
+        """
+        Update the score for a job posting in the database.
+        
+        Args:
+            id: The job posting ID
+            score: The new score value
+        """
         if not self.url_exists_jobs(id):
             print(f"The id '{id}' does not exist in the database.")
             return
@@ -177,6 +184,13 @@ class JobSearchAssistant:
         print(f"Score for id '{id}' updated to {score}.")
 
     def update_job(self, url, **kwargs):
+        """
+        Update multiple fields for a job posting in the database.
+        
+        Args:
+            url: The job posting URL
+            **kwargs: Field names and values to update
+        """
         if not self.url_exists_jobs(url):
             print(f"The URL '{url}' does not exist in the database.")
             return
@@ -189,11 +203,29 @@ class JobSearchAssistant:
         self.conn.commit()
 
     def url_exists_knowns_links(self, url):
+        """
+        Check if a URL exists in the known_links table.
+        
+        Args:
+            url: The URL to check
+            
+        Returns:
+            bool: True if URL exists, False otherwise
+        """
         self.c.execute("SELECT COUNT(*) FROM known_links WHERE url = ?", (url,))
         count = self.c.fetchone()[0]
         return count > 0
 
     def get_is_job_page(self, url):
+        """
+        Get the is_job_page status for a URL from known_links table.
+        
+        Args:
+            url: The URL to check
+            
+        Returns:
+            bool|None: True if job page, False if not, None if URL not found
+        """
         self.c.execute("SELECT is_job_page FROM known_links WHERE url = ?", (url,))
         result = self.c.fetchone()
         if result:
@@ -202,6 +234,13 @@ class JobSearchAssistant:
             return None
 
     def add_known_link(self, url, is_job_page):
+        """
+        Add a new URL to the known_links table.
+        
+        Args:
+            url: The URL to add
+            is_job_page: Boolean indicating if URL is a job posting
+        """
         current_datetime = datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
         self.c.execute('''INSERT INTO known_links (url, is_job_page, date) VALUES (?, ?, ?)''', (url, is_job_page, current_datetime))
         self.conn.commit()
@@ -209,6 +248,15 @@ class JobSearchAssistant:
 
 
     def get_jobs_descriptions(self, date):
+        """
+        Get all job posting URLs from known_links after given date.
+        
+        Args:
+            date: Date string in YYYY/MM/DD format
+            
+        Returns:
+            list: URLs of job postings
+        """
         self.c.execute(f"SELECT url FROM known_links WHERE is_job_page = 1 AND date >= '{date}'")
         rows = self.c.fetchall()
         lst = [row[0] for row in rows]
@@ -216,6 +264,12 @@ class JobSearchAssistant:
         return lst
 
     def get_jobs_to_score(self):
+        """
+        Get all relevant jobs that need scoring.
+        
+        Returns:
+            list: Tuples of (url, description) for relevant jobs
+        """
         self.c.execute("SELECT url, description FROM jobs WHERE is_relevant = 1")
         rows = self.c.fetchall()
         lst = [(row[0], row[1]) for row in rows]
