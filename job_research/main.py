@@ -97,23 +97,52 @@ class JobSearchAssistant:
         self.cost = 0
 
     def get_cost(self):
+        """Return the total cost of LLM API calls made during execution."""
         return self.cost
 
     def query_llm(self, prompt, model="gpt-4o-mini"):
+        """
+        Query the LLM with given prompt and model, tracking costs.
+        
+        Args:
+            prompt: The prompt to send to the LLM
+            model: The model to use (default: gpt-4o-mini)
+            
+        Returns:
+            dict: The LLM response containing the generated text and metadata
+        """
         response = query_llm(prompt, model)
         self.cost += response["cost"]
         return response
 
     def verbose_print(self, msg):
+        """Print message if verbose mode is enabled."""
         if self.verbose:
             print(msg)
 
     def url_exists_jobs(self, url):
+        """
+        Check if a URL already exists in the jobs table.
+        
+        Args:
+            url: The URL to check
+            
+        Returns:
+            bool: True if URL exists, False otherwise
+        """
         self.c.execute("SELECT COUNT(*) FROM jobs WHERE url = ?", (url,))
         count = self.c.fetchone()[0]
         return count > 0
 
     def add_job(self, job_details):
+        """
+        Add a new job posting to the database.
+        
+        Args:
+            job_details: Dictionary containing job information including:
+                        url, title, description, salary, location, company,
+                        is_relevant, is_valid, documents_path, score
+        """
         url = job_details.get('url')
         title = job_details.get('title')
         description = job_details.get('description')
