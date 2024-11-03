@@ -14,6 +14,42 @@ import numpy as np
 import datetime
 
 class JobSearchAssistant:
+    """
+    Job Search Assistant Module
+
+    This module provides an automated job search and application document generation system.
+    It handles the entire workflow from finding jobs to creating application materials.
+
+    Core Features:
+    1. Automated Job Search:
+       - Uses LLMs to create intelligent search queries
+       - Scrapes job postings from various websites
+       - Stores results in SQLite database
+
+    2. Job Analysis:
+       - Determines job relevance to user's profile
+       - Scores job matches
+       - Extracts key information (salary, location, etc.)
+
+    3. Document Generation:
+       - Creates customized resumes
+       - Generates tailored cover letters
+       - Outputs both LaTeX and PDF formats
+
+    Database Schema:
+    - jobs: Stores job postings and analysis
+    - known_links: Tracks processed URLs to avoid duplicates
+
+    Args:
+        user_context_file (str): Path to JSON file containing user profile/experience
+        user_want_file (str): Path to markdown file describing job search criteria
+        verbose (bool): Enable detailed logging output
+        max_workers (int): Max concurrent workers for processing
+        skip_domains (list): List of domains to exclude from search
+        output_dir (str): Directory for generated documents
+        query_limit (int): Maximum search results per query
+        date (str): Filter date in YYYY/MM/DD format
+    """
     def __init__(self, user_context_file, user_want_file, verbose=False, max_workers = None, skip_domains=[], output_dir = "./output_dir", query_limit = 5, date=''):
         self.conn = sqlite3.connect('jobs.db')
         self.c = self.conn.cursor()
