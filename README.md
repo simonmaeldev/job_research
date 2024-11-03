@@ -60,17 +60,9 @@ curl -sSL https://install.python-poetry.org | python3 -
 poetry install
 ```
 
-4. Install pdflatex:
-```bash
-# Ubuntu/Debian
-sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
-
-# Arch Linux
-sudo pacman -S texlive-most
-
-# macOS (using Homebrew)
-brew install basictex
-```
+4. Install pdflatex to convert LaTeX documents to PDF:
+   - Follow the installation guide for your operating system at:
+   https://gist.github.com/rain1024/98dd5e2c6c8c28f9ea9d
 
 5. Set up environment variables:
 Create a `.env` file in the project root:
