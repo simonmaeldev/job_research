@@ -456,52 +456,88 @@ class JobSearchAssistant:
             print('all initial links are processed!')
             self.process_descriptions(self.date)
 
-    def generate_cover_letter(self, job_desc: json, output_path: str):
-        # Step 1: Get pain points
+    def _identify_pain_points(self, job_desc: dict) -> str:
+        """Extract key challenges and pain points from the job description"""
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         response = self.query_llm(prompt, model="sonnet")
-        pain_points = search_for_tag(response, "pain_points")
-        print(pain_points)
-        job_desc['challengesAndPainPoints'] = pain_points
+        return search_for_tag(response, "pain_points")
 
-        # Step 2: Connect with the reader
+    def _generate_hook(self, job_desc: dict) -> str:
+        """Create an engaging opening hook for the cover letter"""
         prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         response = self.query_llm(prompt, model="sonnet")
         hook = search_for_tag(response, "hook")
-        print(hook)
-        print(f"hook : {len(hook.split(' '))} words")
-        cover_letter = {'hook': hook}
+        self.verbose_print(f"Hook length: {len(hook.split(' '))} words")
+        return hook
 
-        # Step 3: Write body of cover letter
+    def _generate_body(self, job_desc: dict, cover_letter: dict) -> dict:
+        """Generate the main content of the cover letter"""
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
         response = self.query_llm(prompt, model="sonnet")
-        cl_txt = search_for_tag(response, "cover_letter")
-        cover_letter = json.loads(cl_txt, strict=False)
-        print(f"body: {len(cover_letter['body'].split(' '))} words")
+        return json.loads(search_for_tag(response, "cover_letter"), strict=False)
 
-        # Step 4: generate cover letter in tex and pdf
+    def _generate_latex(self, cover_letter: dict, output_path: str) -> str:
+        """Convert cover letter content to LaTeX format and save to file"""
         prompt = LATEX_COVER_LETTER_PROMPT.replace("{{cover_letter}}", json.dumps(cover_letter))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        with open(os.path.join(os.path.dirname(__file__), "cover_template.tex"), "r", encoding="utf-8") as f:
+        
+        template_path = os.path.join(os.path.dirname(__file__), "cover_template.tex")
+        with open(template_path, "r", encoding="utf-8") as f:
             cover_latex_template = f.read()
+        
         prompt = prompt.replace("{{latex_template}}", cover_latex_template)
         response = self.query_llm(prompt)
         cl_tex = search_for_tag(response, "cover_latex")
+        
         cover_letter_tex_path = os.path.join(output_path, "cover_letter.tex")
         with open(cover_letter_tex_path, "w", encoding="utf-8") as f:
             f.write(cl_tex)
-        
-        # Convert LaTeX to PDF
-        os.system(f"pdflatex -output-directory={output_path} {cover_letter_tex_path}")
-        
-        # Clean up auxiliary files
+            
+        return cover_letter_tex_path
+
+    def _cleanup_latex_files(self, output_path: str):
+        """Remove LaTeX auxiliary files after PDF generation"""
         for ext in [".aux", ".log", ".out"]:
             aux_file = os.path.join(output_path, f"cover_letter{ext}")
             if os.path.exists(aux_file):
                 os.remove(aux_file)
+
+    def generate_cover_letter(self, job_desc: dict, output_path: str) -> str:
+        """
+        Generate a customized cover letter for a job application.
+        
+        Steps:
+        1. Identify pain points from job description
+        2. Generate engaging hook
+        3. Create full cover letter content
+        4. Convert to LaTeX and PDF
+        
+        Args:
+            job_desc: Dictionary containing job details
+            output_path: Directory to save output files
+            
+        Returns:
+            Path to generated PDF file
+        """
+        # Extract pain points
+        pain_points = self._identify_pain_points(job_desc)
+        job_desc['challengesAndPainPoints'] = pain_points
+        
+        # Generate hook and initial structure
+        hook = self._generate_hook(job_desc)
+        cover_letter = {'hook': hook}
+        
+        # Generate full content
+        cover_letter = self._generate_body(job_desc, cover_letter)
+        self.verbose_print(f"Body length: {len(cover_letter['body'].split(' '))} words")
+        
+        # Convert to LaTeX and PDF
+        tex_path = self._generate_latex(cover_letter, output_path)
+        os.system(f"pdflatex -output-directory={output_path} {tex_path}")
+        self._cleanup_latex_files(output_path)
         
         return os.path.join(output_path, "cover_letter.pdf")
 
