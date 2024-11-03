@@ -1,3 +1,18 @@
+"""
+LLM Interface Module
+
+This module provides a unified interface for interacting with various Language Models (LLMs) including:
+- Anthropic's Claude models (opus, sonnet, haiku)
+- OpenAI's GPT models (3.5 and 4)
+- Local Ollama models
+
+It handles:
+- Model selection and API calls
+- Token counting and cost calculation
+- Error handling and retries
+- Response parsing and formatting
+"""
+
 import os
 import openai
 import anthropic
@@ -6,6 +21,7 @@ import re
 import ollama
 import time
 
+# Model configuration constants
 MODEL_NAMES = {
     "opus": "claude-3-opus-20240229",
     "sonnet": "claude-3-5-sonnet-20240620",
@@ -28,87 +44,117 @@ MODEL_PRICING = {
     "gpt-4o-mini": {"input_cost_per_mtok": 0.15, "output_cost_per_mtok": 0.6},
 }
 
+def _query_claude(query: str, model_name: str, api_key: str = None) -> dict:
+    """Handle Claude API calls with retry logic for server overload"""
+    max_retries = 3
+    retry_delay = 10
+    
+    for _ in range(max_retries):
+        try:
+            client = Anthropic(api_key=api_key or os.environ["ANTHROPIC_API_KEY"])
+            response = client.messages.create(
+                model=model_name,
+                max_tokens=4096,
+                messages=[{"role": "user", "content": query}],
+            )
+            return {
+                "response": response.content[0].text,
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
+                "cost": calculate_subagent_cost(model_name, 
+                                              response.usage.input_tokens, 
+                                              response.usage.output_tokens),
+            }
+        except anthropic.InternalServerError as e:
+            error_details = e.response.json()
+            error_code = error_details.get('error', {}).get('type', 'unknown_error')
+            
+            if error_code == 'overloaded_error':
+                print(f"Error 529 - Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                continue
+            raise
+    raise Exception("All retry attempts failed")
+
+def _query_openai(query: str, model_name: str, api_key: str = None) -> dict:
+    """Handle OpenAI API calls"""
+    openai.api_key = api_key or os.environ["OPENAI_API_KEY"]
+    response = openai.chat.completions.create(
+        model=model_name,
+        messages=[{"role": "user", "content": query}],
+    )
+    return {
+        "response": response.choices[0].message.content,
+        "input_tokens": response.usage.prompt_tokens,
+        "output_tokens": response.usage.completion_tokens,
+        "cost": calculate_subagent_cost(model_name, 
+                                      response.usage.prompt_tokens, 
+                                      response.usage.completion_tokens),
+    }
+
+def _query_ollama(query: str, model_name: str) -> dict:
+    """Handle local Ollama model calls"""
+    response = ollama.generate(model=model_name, prompt=query)
+    return {
+        "response": response["response"],
+        "cost": 0
+    }
+
 def query_llm(query: str, model: str = "gpt-4o-mini", api_key: str = None) -> dict:
     """
-    Query an LLM (Anthropic or OpenAI) with the given query and model.
+    Query an LLM with automatic model selection and error handling.
 
     Args:
-        query (str): The query to send to the LLM.
-        model (str): The LLM model to use (opus, sonnet, haiku, gpt3.5-turbo, or gpt4-turbo).
-        api_key (str, optional): The API key for the LLM service. If not provided, it will be read from the environment variable.
+        query: The prompt/question to send to the LLM
+        model: Model identifier from MODEL_NAMES
+        api_key: Optional API key (defaults to environment variable)
 
     Returns:
-        dict: A dictionary containing the response, input tokens, output tokens, and cost.
+        dict containing:
+        - response: The LLM's text response
+        - input_tokens: Number of input tokens (if applicable)
+        - output_tokens: Number of output tokens (if applicable)
+        - cost: Calculated cost in USD
     """
-    
     if model not in MODEL_NAMES:
         raise ValueError(f"Unsupported model: {model}")
 
     model_name = MODEL_NAMES[model]
 
     if "claude" in model_name:
-        max_retries = 3
-        retry_delay = 10
-        for _ in range(max_retries):
-            try:
-                client = Anthropic(api_key=api_key or os.environ["ANTHROPIC_API_KEY"])
-                response = client.messages.create(
-                    model=model_name,
-                    max_tokens=4096,
-                    messages=[{"role": "user", "content": query}],
-                )
-                result = {
-                    "response": response.content[0].text,
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
-                    "cost": calculate_subagent_cost(model, response.usage.input_tokens, response.usage.output_tokens),
-                }
-                break
-            except anthropic.InternalServerError as e:
-                print(type(e))
-                print(f'error:{e}|')
-                # Access the error details from the response attribute
-                error_details = e.response.json()
-                error_code = error_details.get('error', {}).get('type', 'unknown_error')
-                
-                # Check if the error is 'overloaded_error'
-                if error_code == 'overloaded_error':
-                    print("Erreur 529 - Tentative de reconnexion dans {} secondes...".format(retry_delay))
-                    time.sleep(retry_delay)
-                else:
-                    raise
-        else:
-            print("Toutes les tentatives ont échoué.")
+        return _query_claude(query, model_name, api_key)
     elif "gpt" in model_name:
-        openai.api_key = api_key or os.environ["OPENAI_API_KEY"]
-        response = openai.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": query}],
-        )
-        result = {
-            "response": response.choices[0].message.content,
-            "input_tokens": response.usage.prompt_tokens,
-            "output_tokens": response.usage.completion_tokens,
-            "cost": calculate_subagent_cost(model, response.usage.prompt_tokens, response.usage.completion_tokens),
-        }
+        return _query_openai(query, model_name, api_key)
     else:
-        response = ollama.generate(model=model_name, prompt=query)
-        result = {
-            "response": response["response"],
-            "cost": 0
-        }
-    return result
+        return _query_ollama(query, model_name)
 
-def calculate_subagent_cost(model, input_tokens, output_tokens):
-    """Calculate the cost of a subagent query based on the model and token usage."""
-
+def calculate_subagent_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """
+    Calculate API call cost based on token usage and model pricing.
+    
+    Args:
+        model: Model identifier from MODEL_PRICING
+        input_tokens: Number of input tokens used
+        output_tokens: Number of output tokens generated
+    
+    Returns:
+        Total cost in USD
+    """
     input_cost = (input_tokens / 1_000_000) * MODEL_PRICING[model]["input_cost_per_mtok"]
     output_cost = (output_tokens / 1_000_000) * MODEL_PRICING[model]["output_cost_per_mtok"]
-    total_cost = input_cost + output_cost
-
-    return total_cost
+    return input_cost + output_cost
 
 def search_for_tag(answer: dict, tag: str) -> str:
+    """
+    Extract content between XML-style tags from LLM response.
+    
+    Args:
+        answer: Dict containing LLM response
+        tag: Tag name to search for (without < >)
+    
+    Returns:
+        Content between tags or None if not found
+    """
     regex = f'<{tag}>(.*?)</{tag}>'
     match = re.search(regex, answer["response"], re.DOTALL)
     if match:
@@ -117,15 +163,21 @@ def search_for_tag(answer: dict, tag: str) -> str:
     return None
 
 def prompt_formatter(prompt_to_format: str) -> str:
-    with open('/home/mael/Documents/agentic_projetcs/projets_perso/aait/aait/metaprompt.txt', 'r') as f:
-        full_metaprompt = f.read()
-        prompt = full_metaprompt
-        full_query = prompt.replace('{{prompt}}', prompt_to_format)
-        model = "sonnet"
-
-        # Query the LLM using the query_llm function from llm.py
-        result = query_llm(full_query, model=model)
-        print(result['response'])
+    """
+    Format a prompt using a metaprompt template and get LLM response.
+    
+    Args:
+        prompt_to_format: Raw prompt to be formatted
+    
+    Returns:
+        Formatted LLM response
+    """
+    metaprompt_path = '/home/mael/Documents/agentic_projetcs/projets_perso/aait/aait/metaprompt.txt'
+    with open(metaprompt_path, 'r') as f:
+        metaprompt = f.read()
+        full_query = metaprompt.replace('{{prompt}}', prompt_to_format)
+        result = query_llm(full_query, model="sonnet")
+        return result['response']
 
 PROMPT_TO_FORMAT = """
 Given the following user context:
