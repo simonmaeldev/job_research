@@ -116,7 +116,12 @@ class JobSearchAssistant:
         return response
 
     def verbose_print(self, msg):
-        """Print message if verbose mode is enabled."""
+        """
+        Print message if verbose mode is enabled.
+        
+        Args:
+            msg: Message to print
+        """
         if self.verbose:
             print(msg)
 
