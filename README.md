@@ -46,8 +46,8 @@ The system operates in several key stages:
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
-cd [repository-name]
+git clone https://github.com/simonmaeldev/job_research.git
+cd job_research
 ```
 
 2. Install Poetry if not already installed:
