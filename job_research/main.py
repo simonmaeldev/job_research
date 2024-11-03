@@ -369,12 +369,35 @@ class JobSearchAssistant:
         return domain
 
     def fix_url(self, link, url_src):
+        """
+        Fix relative URLs by adding domain and protocol if needed.
+        
+        Args:
+            link: URL to fix (may be relative)
+            url_src: Source URL to get domain/protocol from
+            
+        Returns:
+            str: Complete URL with domain and protocol
+        """
         domain = self.get_domain_name(url_src)
         if domain not in link:
             link = url_src.split(domain)[0] + domain + link
         return link
 
     def get_links(self, content:str, url_src: str):
+        """
+        Extract job posting links from HTML content.
+        
+        Uses LLM to analyze each link and determine if it points to a job posting.
+        Stores results in known_links database.
+        
+        Args:
+            content: HTML content to parse
+            url_src: Source URL for fixing relative links
+            
+        Returns:
+            list: URLs that were identified as job postings
+        """
         parsed = BeautifulSoup(content, "html.parser")
         links = []
         print("scanning links...")
