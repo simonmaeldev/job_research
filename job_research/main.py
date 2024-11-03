@@ -580,13 +580,39 @@ class JobSearchAssistant:
             self.process_descriptions(self.date)
 
     def _identify_pain_points(self, job_desc: dict) -> str:
-        """Extract key challenges and pain points from the job description"""
+        """
+        Extract key challenges and pain points from the job description.
+        
+        Uses LLM to analyze job description and identify:
+        - Key business challenges
+        - Technical pain points
+        - Critical needs
+        
+        Args:
+            job_desc: Dictionary containing job details
+            
+        Returns:
+            str: Formatted list of identified pain points
+        """
         prompt = GET_PAIN_POINTS_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         response = self.query_llm(prompt, model="sonnet")
         return search_for_tag(response, "pain_points")
 
     def _generate_hook(self, job_desc: dict) -> str:
-        """Create an engaging opening hook for the cover letter"""
+        """
+        Create an engaging opening hook for the cover letter.
+        
+        Uses LLM to generate a personalized opening that:
+        - Connects with the reader
+        - Shows understanding of company needs
+        - Highlights relevant experience
+        
+        Args:
+            job_desc: Dictionary containing job details
+            
+        Returns:
+            str: Opening paragraph for cover letter
+        """
         prompt = CONNECT_WITH_READER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         response = self.query_llm(prompt, model="sonnet")
@@ -595,7 +621,22 @@ class JobSearchAssistant:
         return hook
 
     def _generate_body(self, job_desc: dict, cover_letter: dict) -> dict:
-        """Generate the main content of the cover letter"""
+        """
+        Generate the main content of the cover letter.
+        
+        Creates a structured cover letter with:
+        - Professional background
+        - Relevant achievements
+        - Skills alignment
+        - Cultural fit
+        
+        Args:
+            job_desc: Dictionary containing job details
+            cover_letter: Initial cover letter structure with hook
+            
+        Returns:
+            dict: Complete cover letter content
+        """
         prompt = WRITE_COVER_LETTER_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{cover_letter}}", json.dumps(cover_letter))
@@ -603,7 +644,22 @@ class JobSearchAssistant:
         return json.loads(search_for_tag(response, "cover_letter"), strict=False)
 
     def _generate_latex(self, cover_letter: dict, output_path: str) -> str:
-        """Convert cover letter content to LaTeX format and save to file"""
+        """
+        Convert cover letter content to LaTeX format and save to file.
+        
+        Steps:
+        1. Load LaTeX template
+        2. Format content for LaTeX
+        3. Generate complete document
+        4. Save to file
+        
+        Args:
+            cover_letter: Dictionary with letter content
+            output_path: Directory to save output
+            
+        Returns:
+            str: Path to generated LaTeX file
+        """
         prompt = LATEX_COVER_LETTER_PROMPT.replace("{{cover_letter}}", json.dumps(cover_letter))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         
@@ -622,7 +678,17 @@ class JobSearchAssistant:
         return cover_letter_tex_path
 
     def _cleanup_latex_files(self, output_path: str):
-        """Remove LaTeX auxiliary files after PDF generation"""
+        """
+        Remove LaTeX auxiliary files after PDF generation.
+        
+        Removes common LaTeX temporary files:
+        - .aux (auxiliary data)
+        - .log (compilation log)
+        - .out (hyperref data)
+        
+        Args:
+            output_path: Directory containing LaTeX files
+        """
         for ext in [".aux", ".log", ".out"]:
             aux_file = os.path.join(output_path, f"cover_letter{ext}")
             if os.path.exists(aux_file):
@@ -665,7 +731,23 @@ class JobSearchAssistant:
         return os.path.join(output_path, "cover_letter.pdf")
 
     def _generate_summary_step(self, step_num: int, job_desc: dict, previous_result: dict = None) -> dict:
-        """Generate a single step of the professional summary using LLM"""
+        """
+        Generate a single step of the professional summary using LLM.
+        
+        Multi-step process to build resume summary:
+        1. Professional adjectives
+        2. Job title/field
+        3. Experience statement
+        4. Specialties
+        
+        Args:
+            step_num: Current step number (1-4)
+            job_desc: Dictionary containing job details
+            previous_result: Results from previous steps
+            
+        Returns:
+            dict: Generated content for current step
+        """
         prompt_var = f"GENERATE_PROFESSIONAL_SUMMARY_STEP{step_num}_PROMPT"
         prompt = globals()[prompt_var].replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
@@ -679,7 +761,16 @@ class JobSearchAssistant:
         return result
 
     def _save_professional_summary(self, summary: str, output_path: str):
-        """Save the generated professional summary to a file"""
+        """
+        Save the generated professional summary to a file.
+        
+        Args:
+            summary: Generated professional summary text
+            output_path: Directory to save output file
+            
+        Creates:
+            professional_summary.txt in output directory
+        """
         summary_file_path = os.path.join(output_path, "professional_summary.txt")
         with open(summary_file_path, "w", encoding="utf-8") as f:
             f.write(summary)
@@ -711,7 +802,25 @@ class JobSearchAssistant:
         self.verbose_print(f"Generated professional summary:\n{professional_summary}")
         self._save_professional_summary(professional_summary, output_path)
 
-    def generate_resume_latex(self, professional_summary, job_desc, output_path):
+    def generate_resume_latex(self, professional_summary: str, job_desc: dict, output_path: str) -> str:
+        """
+        Generate LaTeX resume from professional summary and job details.
+        
+        Steps:
+        1. Load resume template
+        2. Format content for LaTeX
+        3. Generate complete document
+        4. Compile to PDF
+        5. Clean up auxiliary files
+        
+        Args:
+            professional_summary: Generated summary text
+            job_desc: Dictionary containing job details
+            output_path: Directory to save output
+            
+        Returns:
+            str: Path to generated PDF file
+        """
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{job_desc}}", json.dumps(job_desc))
@@ -738,7 +847,23 @@ class JobSearchAssistant:
 
         return os.path.join(output_path, "resume.pdf")
 
-    def create_resume_cover_letter(self, job_desc: json, dir_name: str):
+    def create_resume_cover_letter(self, job_desc: dict, dir_name: str) -> str:
+        """
+        Create complete application package with resume and cover letter.
+        
+        Steps:
+        1. Create output directory
+        2. Generate resume content
+        3. Generate cover letter
+        4. Create PDF versions
+        
+        Args:
+            job_desc: Dictionary containing job details
+            dir_name: Name for output directory
+            
+        Returns:
+            str: Path to output directory containing documents
+        """
         # Create the directory
         output_path = os.path.join(self.output_dir, dir_name)
         os.makedirs(output_path, exist_ok=True)
@@ -757,7 +882,18 @@ class JobSearchAssistant:
         self.apply_job_search_plan()
 
 
-    def create_outputs_from_db(self, id):
+    def create_outputs_from_db(self, id: int):
+        """
+        Generate application documents from database job entry.
+        
+        Steps:
+        1. Fetch job details from database
+        2. Create output directory
+        3. Generate resume and cover letter
+        
+        Args:
+            id: Database ID of job posting
+        """
         # Fetch job details from the database
         self.c.execute("SELECT * FROM jobs WHERE id = ?", (id,))
         job = self.c.fetchone()
@@ -789,7 +925,23 @@ class JobSearchAssistant:
         
         print(f"Outputs created for job {id} in directory {dir_name}")
 
-    def create_outputs_from_params(self, title: str, company: str, description: str):
+    def create_outputs_from_params(self, title: str, company: str, description: str) -> str:
+        """
+        Generate application documents from manual input.
+        
+        Steps:
+        1. Create job details dictionary
+        2. Generate documents in named directory
+        3. Open output directory
+        
+        Args:
+            title: Job title
+            company: Company name
+            description: Job description text
+            
+        Returns:
+            str: Path to output directory
+        """
         # Create a JSON object with the provided information
         job_json = {
             "title": title,
