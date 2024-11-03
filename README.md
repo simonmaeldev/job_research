@@ -199,6 +199,16 @@ Resume and cover letter writing tips inspired by:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## Similar Projects
+
+### AIHawk Auto Job Applier
+For automated LinkedIn job applications, check out [AIHawk](https://github.com/feder-cr/Auto_Jobs_Applier_AIHawk) which offers:
+- Automated LinkedIn job applications
+- Resume generation capabilities
+- AI-powered application process
+
+While our project focuses on comprehensive job search and document preparation across multiple platforms, AIHawk specializes in LinkedIn automation.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
