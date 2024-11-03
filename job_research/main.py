@@ -278,6 +278,17 @@ class JobSearchAssistant:
 
     # Create an agent that plans on what and where (which website) to search, given the user's context
     def plan_job_search(self):
+        """
+        Plan job search strategy based on user context.
+        
+        Uses LLM to:
+        1. Analyze user profile and preferences
+        2. Determine domain of interest
+        3. Generate relevant search queries
+        
+        Returns:
+            list: Search queries to use for job hunting
+        """
         prompt = PLAN_JOB_SEARCH_PROMPT.replace("{{user_context}}", json.dumps(self.user_context))
         response = self.query_llm(prompt, model="gpt-4o-mini")
         self.verbose_print(f"plan job search response : {response}")
@@ -293,6 +304,15 @@ class JobSearchAssistant:
         return query_list
 
     def next_page_finder(self, url:str) -> str:
+        """
+        Find the "next page" link on a job listing page.
+        
+        Args:
+            url: URL of current job listing page
+            
+        Returns:
+            str|None: URL of next page if found, None otherwise
+        """
         prompt = NEXT_PAGE_FINDER_PROMPT
         prompt_copy = prompt.replace("{{URL}}", url)
         self.verbose_print(f"url scanned: {url}")
@@ -304,6 +324,17 @@ class JobSearchAssistant:
         return res
 
     def is_url_job_description(self, url:str) -> bool:
+        """
+        Determine if a URL points to a job description page.
+        
+        Checks database first, then uses LLM to analyze if not found.
+        
+        Args:
+            url: URL to analyze
+            
+        Returns:
+            bool: True if URL is a job description page
+        """
         if self.url_exists_knowns_links(url):
             self.verbose_print(f"url is in db : {url}")
             val = self.get_is_job_page(url)
@@ -323,6 +354,15 @@ class JobSearchAssistant:
 
 
     def get_domain_name(self, url):
+        """
+        Extract the base domain name from a URL.
+        
+        Args:
+            url: Full URL to process
+            
+        Returns:
+            str: Base domain (e.g., 'example.com')
+        """
         domain = urlparse(url).netloc
         domain_parts = domain.split('.')
         domain = '.'.join(domain_parts[-2:]) if len(domain_parts) > 2 else domain
