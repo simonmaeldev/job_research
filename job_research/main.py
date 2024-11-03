@@ -376,32 +376,57 @@ class JobSearchAssistant:
 #                    future.result()
         print(f"{l} jobs descriptions succesfully processed.")       
 
+    def _extract_job_content(self, content):
+        """Extract clean text content from HTML, removing scripts and styles"""
+        if isinstance(content, list):
+            self.verbose_print("Content is list, cannot process")
+            return None
+            
+        soup = BeautifulSoup(content, 'html.parser')
+        for element in soup(["script", "style"]):
+            element.extract()
+        return soup.get_text()
+
+    def _create_empty_job_result(self, url):
+        """Create a default job result when extraction fails"""
+        return {
+            'url': url,
+            'title': "No title",
+            'description': 'No description',
+            "is_relevant": False
+        }
+
     def process_job_description(self, url):
-        if not self.url_exists_jobs(url):
-            content = self.scraper.retry_with_backoff(url)
-            if type(content) == list :
-                print("content is list:")
-                print(content)
-                res = None
-            else:
-                soup = BeautifulSoup(content, 'html.parser')
-                for element in soup(["script", "style"]):
-                    element.extract()
-                text = soup.get_text()
-                res = self.format_text_to_markdown(text)
-            if res == None:
-                print(f"no info could be extracted from {url}")
-                res = {
-                    'url' : url,
-                    'title' : "No title",
-                    'description' : 'No description',
-                    "is_relevant" : False
-                }
+        """
+        Process a job posting URL to extract and analyze its content.
+        
+        Steps:
+        1. Check if job already exists in database
+        2. Fetch and clean HTML content
+        3. Extract job details and format as markdown
+        4. Determine job relevance
+        5. Save to database
+        """
+        if self.url_exists_jobs(url):
+            self.verbose_print(f"Job already exists: {url}")
+            return
+
+        # Fetch and process content
+        content = self.scraper.retry_with_backoff(url)
+        text = self._extract_job_content(content)
+        
+        if text is None:
+            res = self._create_empty_job_result(url)
+        else:
+            res = self.format_text_to_markdown(text)
+            if res is None:
+                res = self._create_empty_job_result(url)
             else:
                 res["url"] = url
                 res["is_relevant"] = self.is_job_relevant(res)
-                self.verbose_print(f'is relevant : {res["is_relevant"]}')
-            self.add_job(res)
+                self.verbose_print(f'Job relevance: {res["is_relevant"]}')
+        
+        self.add_job(res)
 
     def process_descriptions(self, date):
         jobs = self.get_jobs_descriptions(date)
@@ -480,51 +505,52 @@ class JobSearchAssistant:
         
         return os.path.join(output_path, "cover_letter.pdf")
 
-    def generate_resume(self, job_desc: json, output_path: str):
-        # Step 1: Generate adjective
-        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP1_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
+    def _generate_summary_step(self, step_num: int, job_desc: dict, previous_result: dict = None) -> dict:
+        """Generate a single step of the professional summary using LLM"""
+        prompt_var = f"GENERATE_PROFESSIONAL_SUMMARY_STEP{step_num}_PROMPT"
+        prompt = globals()[prompt_var].replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
+        
+        if previous_result:
+            prompt = prompt.replace("{{previous_step}}", json.dumps(previous_result))
+            
         response = self.query_llm(prompt, model="sonnet")
-        step1_result = json.loads(search_for_tag(response, "output"))
-        print(json.dumps(step1_result))
+        result = json.loads(search_for_tag(response, "output"))
+        self.verbose_print(f"Step {step_num} result: {json.dumps(result)}")
+        return result
 
-        # Step 2: Generate job title or professional field
-        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP2_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        prompt = prompt.replace("{{previous_step}}", json.dumps(step1_result))
-        response = self.query_llm(prompt, model="sonnet")
-        step2_result = json.loads(search_for_tag(response, "output"))
-        print(json.dumps(step2_result))
+    def _save_professional_summary(self, summary: str, output_path: str):
+        """Save the generated professional summary to a file"""
+        summary_file_path = os.path.join(output_path, "professional_summary.txt")
+        with open(summary_file_path, "w", encoding="utf-8") as f:
+            f.write(summary)
 
-        # Step 3: Generate experience statement
-        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP3_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        prompt = prompt.replace("{{previous_step}}", json.dumps(step2_result))
-        response = self.query_llm(prompt, model="sonnet")
-        step3_result = json.loads(search_for_tag(response, "output"))
-        print(json.dumps(step3_result))
+    def generate_resume(self, job_desc: dict, output_path: str):
+        """
+        Generate a professional resume summary through a multi-step LLM process.
+        
+        Steps:
+        1. Generate professional adjectives
+        2. Generate job title/field
+        3. Generate experience statement
+        4. Generate specialties
+        5. Combine into final summary
+        """
+        # Generate each component
+        step1_result = self._generate_summary_step(1, job_desc)
+        step2_result = self._generate_summary_step(2, job_desc, step1_result)
+        step3_result = self._generate_summary_step(3, job_desc, step2_result)
+        step4_result = self._generate_summary_step(4, job_desc, step3_result)
 
-        # Step 4: Generate specialties
-        prompt = GENERATE_PROFESSIONAL_SUMMARY_STEP4_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
-        prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
-        prompt = prompt.replace("{{previous_step}}", json.dumps(step3_result))
-        response = self.query_llm(prompt, model="sonnet")
-        step4_result = json.loads(search_for_tag(response, "output"))
-        print(json.dumps(step4_result))
-
-        # Final step: Combine all steps into a professional summary
+        # Generate final summary
         prompt = GENERATE_PROFESSIONAL_SUMMARY_FINAL_PROMPT.replace("{{job_desc}}", json.dumps(job_desc))
         prompt = prompt.replace("{{user_info}}", json.dumps(self.user_context))
         prompt = prompt.replace("{{previous_steps}}", json.dumps(step4_result))
         response = self.query_llm(prompt, model="sonnet")
         professional_summary = search_for_tag(response, "professional_summary")
-        print(f"full professional summary :\n{professional_summary}")
-
-        # return self.generate_resume_latex(professional_summary, job_desc, output_path)
-        # Save professional_summary in .txt file
-        summary_file_path = os.path.join(output_path, "professional_summary.txt")
-        with open(summary_file_path, "w", encoding="utf-8") as f:
-            f.write(professional_summary)
+        
+        self.verbose_print(f"Generated professional summary:\n{professional_summary}")
+        self._save_professional_summary(professional_summary, output_path)
 
     def generate_resume_latex(self, professional_summary, job_desc, output_path):
         prompt = LATEX_RESUME_PROMPT.replace("{{professional_summary}}", professional_summary)
@@ -630,10 +656,30 @@ USER_WANT_FILE = os.path.join(os.path.dirname(__file__), "user_want.md")
 assistant = JobSearchAssistant(USER_CONTEXT_FILE, USER_WANT_FILE, verbose=True, max_workers=1, skip_domains=[], date='2024/07/30')
 if __name__ == "__main__":
     try:
-        #assistant.run()
-        #assistant.plan_job_search()
+        # Example 1: Complete job search workflow
+        # Searches for jobs, processes descriptions, and scores matches
+        # assistant.run()
+
+        # Example 2: Process specific job descriptions
+        # Process job postings from a certain date
+        # assistant.process_descriptions('2024/07/30')
+
+        # Example 3: Score existing jobs
+        # Score jobs already in database against user profile
+        # assistant.score_jobs()
+
+        # Example 4: Generate application documents
+        # Create resume and cover letter for a specific job
+        # assistant.create_outputs_from_db(227)
+
+        # Example 5: Generate documents from manual input
+        # assistant.create_outputs_from_params(
+        #     title="Senior Software Engineer",
+        #     company="TechCorp",
+        #     description="Looking for an experienced developer..."
+        # )
+
+        # Run your chosen example here:
         assistant.process_descriptions('2024/07/30')
-        #assistant.score_jobs()
-        #assistant.create_outputs_from_db(227)
     finally:
-        print(f"total cost : {assistant.get_cost()} $USD")
+        print(f"Total API cost: {assistant.get_cost()} $USD")
